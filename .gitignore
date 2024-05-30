@@ -1,0 +1,4 @@
+data_aut/*
+saved_models/*
+!data_aut/.gitkeep
+!saved_models/.gitkeep
