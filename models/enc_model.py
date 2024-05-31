@@ -3,6 +3,8 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, random_split
 
 import enc_methods as methods 
+# Train on the GPU if possible
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def sinusoidal_position_embeddings(seq_length, d_model):
     """
@@ -211,11 +213,11 @@ class EncModel(nn.Module):
             else:
                 attn_mask = nn.Transformer.generate_square_subsequent_mask(
                     seq
-                )
+                ).to(device)
                 x = self.model(x, mask=attn_mask)
         elif self.kind == "hybrid":
             x, _ = self.model1(x)
-            attn_mask = nn.Transformer.generate_square_subsequent_mask(seq)
+            attn_mask = nn.Transformer.generate_square_subsequent_mask(seq).to(device)
             x = self.model2(x, attn_mask)
         else:
             x = self.model(x)

@@ -160,9 +160,11 @@ def enc_training(model, dataset, args, np_data=None):
     else:
         device = torch.device("cpu")
     model = model.to(device)
+    #print('model device: ', device)
 
     # These special values are from the "Attention is all you need" paper
     optim = torch.optim.Adam(model.parameters(), lr=args.lr, betas=(0.9, 0.98), eps=1e-9)
+    # Check optimizer parameter device
 
     directory = 'saved_models'
     
@@ -171,11 +173,9 @@ def enc_training(model, dataset, args, np_data=None):
     acc_list = []
     train_dl, valid_dl = enc_load(np_data,args)
     for epoch in range(args.epochs):
-        for chunk in chunked_dataloader(train_dl, chunk_size=10):
+        for chunk in chunked_dataloader(train_dl, chunk_size=50):
             print(f'Processing data chunk with {len(chunk)} batches')
             train_loss = train_enc(model, chunk, optim)
-            print('train')
-            print('FOOBAR')
             val_loss = validate_enc(model, valid_dl)
             acc = inference_enc(model,valid_dl)
             print('train loss: ', train_loss)

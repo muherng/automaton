@@ -99,16 +99,17 @@ def seq2seq_load(np_data,args):
         val_tgt = tgt[random_indices]
         
 
-    train_src = torch.from_numpy(train_src)
-    train_tgt = torch.from_numpy(train_tgt)
+    print('device data: ', device)
+    train_src = torch.from_numpy(train_src).to(device)
+    train_tgt = torch.from_numpy(train_tgt).to(device)
     train_src = train_src.requires_grad_(False).clone().detach().long()
     train_tgt = train_tgt.requires_grad_(False).clone().detach().long()
     train_iterator = EncDecDataset(train_src,train_tgt)
     # Create the dataloader
     train_dl = DataLoader(train_iterator, batch_size = batch_size)
     
-    val_src = torch.from_numpy(val_src)
-    val_tgt = torch.from_numpy(val_tgt)
+    val_src = torch.from_numpy(val_src).to(device)
+    val_tgt = torch.from_numpy(val_tgt).to(device)
     val_src = val_src.requires_grad_(False).clone().detach().long()
     val_tgt = val_tgt.requires_grad_(False).clone().detach().long()
     val_iterator = EncDecDataset(val_src,val_tgt)
@@ -137,6 +138,7 @@ def enc_load(np_data,args):
     val_data = np_data[val_indices]
 
     # Convert to PyTorch tensors
+    print('device data: ', device)
     train_data = torch.tensor(train_data).to(device)
     val_data = torch.tensor(val_data).to(device)
 
@@ -329,6 +331,7 @@ def train_enc(model, chunk, optim):
         truth = batch[:, 1:]
         #zero the gradients 
         optim.zero_grad()
+        # Assuming 'model' is your model instance
         out = model(batch)[:, :-1]
         loss = F.cross_entropy(out[mask], truth[mask])
         loss.backward()
@@ -390,4 +393,5 @@ def inference_enc(model, valid_dl):
                 assert not torch.all(pred1 == true)
             
         losses += torch.all(preds * mask == truth * mask, dim=1).float().mean()
-    return losses / len(list(valid_dl))
+    acc = losses / len(list(valid_dl))
+    return acc.cpu().numpy()
