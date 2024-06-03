@@ -21,6 +21,9 @@ For training on one dataset at a time to build up to more states and word length
 python train_wrapper.py 
 
 Conda environment stored in environment.yaml
+For Supercloud run 
+module load anaconda/2023a
+source activate <environment name> 
 
 A reccomended way to run the code is 
 python generate_aut.py 
