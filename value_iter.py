@@ -20,9 +20,10 @@ class GridWorld:
             3: (0, 1)    # 'R'
         }
         self.state_values = np.zeros(grid_size)
-        
+
     
     def print_mdp(self):
+        mdp_data = np.zeros()
         for i in range(self.grid_size[0]):
             for j in range(self.grid_size[1]):
                 state_number = self.grid_size[1] * i + j
@@ -30,8 +31,13 @@ class GridWorld:
                 reward = self.rewards.get(state, 0)
                 for action in self.actions:
                     next_state = self.get_next_state(state, action)
+                    if next_state is None:
+                        continue 
                     next_state_number = self.grid_size[1] * next_state[0] + next_state[1]
                     print(f"[{state_number}, {reward}, {action}, {next_state_number}]")
+                    np.array([self.open_paren, state_number, reward, action, next_state_number, self.close_paren])
+
+
 
     # Define the grid world parameters   
     def print_state(self,i,j,value=None):
@@ -43,6 +49,8 @@ class GridWorld:
         neighbors = []
         for action in self.actions:
             next_state = self.get_next_state(state, action)
+            if next_state is None:
+                continue 
             if next_state != state:
                 neighbor_number = self.grid_size[1] * next_state[0] + next_state[1]
                 neighbors.append(neighbor_number)
@@ -56,7 +64,7 @@ class GridWorld:
         neighbor_values = []
         for action in self.actions:
             next_state = self.get_next_state(state, action)
-            if next_state == None:
+            if next_state is None:
                 continue 
             if next_state != state:
                 neighbor_values.append(self.state_values[next_state])
@@ -100,7 +108,7 @@ class GridWorld:
                     value = self.state_values[state]
                     new_value = max(
                         self.rewards.get(state, 0) + np.floor(self.gamma * self.state_values[self.get_next_state(state, action)])
-                        for action in self.actions
+                        for action in self.actions if self.get_next_state(state,action) is not None
                     )
                     new_state_values[state] = new_value
                     delta = max(delta, abs(value - new_value))
@@ -120,6 +128,8 @@ class GridWorld:
                     best_value = float('-inf')
                     for action in self.actions:
                         next_state = self.get_next_state(state, action)
+                        if next_state is None:
+                            continue
                         value = self.rewards.get(state, 0) + self.gamma * self.state_values[next_state]
                         if value > best_value:
                             best_value = value
