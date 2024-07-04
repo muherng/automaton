@@ -11,7 +11,7 @@ import torch
 from collections import Counter
 import torch.nn.functional as F
 import numpy as np
-import program as my_programs
+import mdp as mdp
 
 # Train on the GPU if possible
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -31,7 +31,7 @@ def make_program(args):
         preferred_dtype=args.preferred_dtype,
     )
     if args.op == "dfa":
-        return my_programs.dfa(**kvargs)
+        return mdp.grid_world(**kvargs)
 
 def generate(args):
     dataset = make_program(args)
