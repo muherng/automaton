@@ -43,7 +43,7 @@ def generate(args):
     np_data = dataset.generate_batch(batch_size * train_batches)
 
     directory = 'data_aut'    
-    file = directory + f'/s{args.states}w{args.word_length}.npy'
+    file = directory + f'/s{args.states}i{args.iterations}.npy'
     print('file: ', file)
         
     np.save(file, np_data)
@@ -58,8 +58,8 @@ def save_data_to_src_tgt(np_data,special_symbols,args,directory='data_aut'):
 
     src,tgt =  split_src_tgt(data,special_symbols)
 
-    np.save(directory + f'/src_s{args.states}w{args.word_length}.npy', src)
-    np.save(directory + f'/tgt_s{args.states}w{args.word_length}.npy', tgt)
+    np.save(directory + f'/src_s{args.states}i{args.iterations}.npy', src)
+    np.save(directory + f'/tgt_s{args.states}i{args.iterations}.npy', tgt)
 
     return 
 
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     parser.add_argument("--device", type=str, default=None)
     parser.add_argument("--mode", type=str, default='random')
     parser.add_argument("--states",type=int,default=4)
-    parser.add_argument("--iterations",type=int,default=1)
+    parser.add_argument("--iterations",type=int,default=2)
 
     args = parser.parse_args()
     print('args: ', args)
