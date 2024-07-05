@@ -116,8 +116,8 @@ if __name__ == "__main__":
     parser.add_argument("--compile", action="store_true")
     parser.add_argument("--device", type=str, default=None)
     parser.add_argument("--mode", type=str, default='random')
-    parser.add_argument("--states",type=int,default=9)
-    parser.add_argument("--iterations",type=int,default=5)
+    parser.add_argument("--states",type=int,default=4)
+    parser.add_argument("--iterations",type=int,default=1)
 
     args = parser.parse_args()
     print('args: ', args)
