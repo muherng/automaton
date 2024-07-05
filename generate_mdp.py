@@ -105,8 +105,8 @@ if __name__ == "__main__":
         default="mdp",
         help="automaton type",
     )
-    parser.add_argument("--train-batches", type=int, default=1000)
-    parser.add_argument("--batch-size", type=int, default=2**10)
+    parser.add_argument("--train-batches", type=int, default=1)
+    parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument(
         "--preferred-dtype",
         type=str,
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     parser.add_argument("--compile", action="store_true")
     parser.add_argument("--device", type=str, default=None)
     parser.add_argument("--mode", type=str, default='random')
-    parser.add_argument("--states",type=int,default=16)
+    parser.add_argument("--states",type=int,default=9)
     parser.add_argument("--iterations",type=int,default=5)
 
     args = parser.parse_args()
