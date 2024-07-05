@@ -24,13 +24,12 @@ def create_directory(directory):
 
 def make_program(args):   
     kvargs = dict(
-        actions = args.actions,
         states = args.states,
-        iterations = args.iterations,
-        mode = args.mode, 
+        iterations = args.iterations, 
+        mode = args.mode,
         preferred_dtype=args.preferred_dtype,
     )
-    if args.op == "dfa":
+    if args.op == "mdp":
         return mdp.grid_world(**kvargs)
 
 def generate(args):
@@ -103,7 +102,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--op",
         type=str,
-        default="dfa",
+        default="mdp",
         help="automaton type",
     )
     parser.add_argument("--train-batches", type=int, default=1000)
