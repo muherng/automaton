@@ -29,8 +29,8 @@ def make_program(args):
         mode = args.mode,
         preferred_dtype=args.preferred_dtype,
     )
-    if args.op == "mdp":
-        return mdp.grid_world(**kvargs)
+    
+    return mdp.grid_world(**kvargs)
 
 def generate(args):
     dataset = make_program(args)
@@ -105,8 +105,8 @@ if __name__ == "__main__":
         default="mdp",
         help="automaton type",
     )
-    parser.add_argument("--train-batches", type=int, default=1)
-    parser.add_argument("--batch-size", type=int, default=4)
+    parser.add_argument("--train-batches", type=int, default=100)
+    parser.add_argument("--batch-size", type=int, default=2**5)
     parser.add_argument(
         "--preferred-dtype",
         type=str,
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     parser.add_argument("--device", type=str, default=None)
     parser.add_argument("--mode", type=str, default='random')
     parser.add_argument("--states",type=int,default=4)
-    parser.add_argument("--iterations",type=int,default=2)
+    parser.add_argument("--iterations",type=int,default=1)
 
     args = parser.parse_args()
     print('args: ', args)
