@@ -19,9 +19,8 @@ def gen_mdp(self,num_data):
     mdp_data = None
     for i in range(num_data): 
         # create new rewards 
-        self.initialize_rewards()
+        self.initialize()
         mdp_instance = self.print_mdp()
-        #mdp_data[i,:] = mdp_instance
         #run value iteration
         trace_data = self.value_iteration()
         mdp_row = np.concatenate((mdp_instance,
@@ -40,14 +39,19 @@ def state_to_grid(state):
     raise NotImplementedError 
 
 #initialize the rewards dictionary with default set to random
-def initialize_rewards(self,max_reward=16,mode='random'):
+#initalize the state values to be the reward at the state 
+def initialize(self,max_reward=16,mode='random'):
     rows,cols = self.grid_size 
     rewards = {}
+    state_values = np.zeros(self.grid_size)
     for i in range(rows): 
         for j in range(cols):
-            rewards[(i,j)] = np.random.randint(max_reward)
+            r = np.random.randint(max_reward)
+            rewards[(i,j)] = r 
+            state_values[i,j] = r
     self.rewards = rewards
-    return rewards 
+    self.state_values = state_values 
+    return rewards,state_values 
 
 def gen_trace(self,transition_graph, input):
     raise NotImplementedError
@@ -83,8 +87,6 @@ def print_mdp(self):
                                          self.type_state, 
                                          self.number_offset + next_state_number, 
                                          self.close_paren])
-                #print('state_action: ', state_action)
-                #print('flag: ', flag)
                 mdp_data[flag:flag+10] = state_action
                 flag = flag + 10
     return mdp_data[:flag]
@@ -164,6 +166,7 @@ def value_iteration(self):
     trace_data = None
     flag = 0
     for _ in range(self.iterations):
+        #print('state values: ', self.state_values)
         new_state_values = np.copy(self.state_values)
         for i in range(self.grid_size[0]):
             for j in range(self.grid_size[1]):

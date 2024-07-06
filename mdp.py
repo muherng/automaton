@@ -108,7 +108,9 @@ class grid_world(mdp):
         super().__init__(states=states,iterations=iterations,mode=mode, max_number = max_number,**kwargs)
         self.grid_size = (np.sqrt(states).astype(int), np.sqrt(states).astype(int))
         self.terminal_states = []
-        self.rewards = self.initialize_rewards(max_reward = max_reward)
+        rewards,state_values = self.initialize(max_reward = max_reward)
+        self.rewards = rewards
+        self.state_values = state_values
         self.gamma = gamma
         self.actions = [0, 1, 2, 3]  # Corresponding to 'U', 'D', 'L', 'R'
         self.action_effects = {
@@ -116,8 +118,7 @@ class grid_world(mdp):
             1: (1, 0),   # 'D'
             2: (0, -1),  # 'L'
             3: (0, 1)    # 'R'
-        }
-        self.state_values = np.zeros(self.grid_size)    
+        }   
 
     def _generate_batch(self,num_data):
         #TODO: create params
@@ -146,4 +147,4 @@ grid_world.print_state = print_state
 grid_world.get_next_state = get_next_state
 grid_world.value_iteration = value_iteration
 grid_world.get_policy = get_policy
-grid_world.initialize_rewards = initialize_rewards
+grid_world.initialize = initialize
