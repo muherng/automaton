@@ -180,7 +180,7 @@ def value_iteration(self):
                 if trace_data is None:
                     trace_data = np.zeros(np.size(full_iter)) 
                 if flag >= np.size(trace_data): 
-                    new_trace_data = np.zeros(2*np.size(trace_data))
+                    new_trace_data = np.zeros(flag + np.size(full_iter))
                     new_trace_data[:flag] = trace_data
                     trace_data = new_trace_data
                 trace_data[flag:flag+np.size(full_iter)] = full_iter  
