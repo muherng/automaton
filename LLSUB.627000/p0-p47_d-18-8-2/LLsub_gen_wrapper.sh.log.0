@@ -1,5 +1,0 @@
-args:  Namespace(op='dfa', train_batches=1000, batch_size=1024, preferred_dtype='int64', compile=False, device=None, mode='random', states=2, task_id=0, num_tasks=48, num_files=1)
-args:  {'states': 4, 'iterations': 1}
-Generating Program
-[ s 0 r 7 a 1 s 2 ] [ s 0 r 7 a 3 s 1 ] [ s 1 r 5 a 1 s 3 ] [ s 1 r 5 a 2 s 0 ] [ s 2 r 6 a 0 s 0 ] [ s 2 r 6 a 3 s 3 ] [ s 3 r 8 a 0 s 1 ] [ s 3 r 8 a 2 s 2 ] = [ s 0 r 7 v 7 neighbors:  2 1 ] [ s 0 neighbor_values:  6 5 max:  6 discount:  5 intermediate:  3 r 7 output:  10 ] [ s 0 r 7 v 10 neighbors:  2 1 ] [ s 1 r 5 v 5 neighbors:  3 0 ] [ s 1 neighbor_values:  8 7 max:  8 discount:  5 intermediate:  4 r 5 output:  9 ] [ s 1 r 5 v 9 neighbors:  3 0 ] [ s 2 r 6 v 6 neighbors:  0 3 ] [ s 2 neighbor_values:  7 8 max:  8 discount:  5 intermediate:  4 r 6 output:  10 ] [ s 2 r 6 v 10 neighbors:  0 3 ] [ s 3 r 8 v 8 neighbors:  1 2 ] [ s 3 neighbor_values:  5 6 max:  6 discount:  5 intermediate:  3 r 8 output:  11 ] [ s 3 r 8 v 11 neighbors:  1 2 ]
-file:  data_aut/s4i1.npy
