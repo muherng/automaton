@@ -108,10 +108,10 @@ def seq2seq_training(model, dataset, args, defaults=None, np_data = None):
     acc_list = []
     
     special_symbols = dataset.special_symbols 
-    
+    print('before dataloader')
     if args.seq == 'enc-dec': 
         train_dl,valid_dl = seq2seq_load(np_data,args)
-
+    print('after dataloader') 
     # Set up our learning tools
     loss_fn = torch.nn.CrossEntropyLoss(ignore_index=special_symbols["<pad>"])
 
@@ -119,6 +119,7 @@ def seq2seq_training(model, dataset, args, defaults=None, np_data = None):
     optim = torch.optim.Adam(model.parameters(), lr=defaults['lr'], betas=(0.9, 0.98), eps=1e-9)
       
     for epoch in range(args.epochs):
+        print(f'epoch: {epoch} states {args.states}')
         # Iterating through chunked DataLoader for train
         #validation dataloader is small so no need to chunk
         for chunk in chunked_dataloader(train_dl, chunk_size=50):

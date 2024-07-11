@@ -188,8 +188,8 @@ def greedy_decode(model, src, tgt, src_mask, max_len, start_symbol, end_symbol):
         # Update results tensor
         results[:, :ys.size(1)] = ys
     
-    print('tgt: ', tgt[:10,:])
-    print('results: ', results[:10,:])
+    #print('tgt: ', tgt[:10,:])
+    #print('results: ', results[:10,:])
 
     # Calculate accuracy
     acc = torch.sum(torch.all(results == tgt, dim=1)).item() / tgt.size(0)
@@ -233,8 +233,8 @@ def train(model, chunk, loss_fn, optim, special_symbols):
         src = src.to(device)
         tgt = tgt.to(device)
         
-        print('src: ', src[:4,:])
-        print('tgt: ', tgt[:4,:])   
+        #print('src: ', src[:4,:])
+        #print('tgt: ', tgt[:4,:])   
         
         src = torch.transpose(src,0,1)
         tgt = torch.transpose(tgt,0,1)
