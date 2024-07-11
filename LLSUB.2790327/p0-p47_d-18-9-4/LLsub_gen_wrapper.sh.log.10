@@ -1,0 +1,19 @@
+args:  Namespace(op='dfa', train_batches=1000, batch_size=1024, preferred_dtype='int64', compile=False, device=None, mode='random', states=2, task_id=10, num_tasks=48, num_files=1)
+args:  {'states': 16, 'iterations': 3}
+Generating Program
+LLSUB_RANK=10: Traceback (most recent call last):
+LLSUB_RANK=10:   File "/home/gridsan/myau/automaton/generate_mdp_wrapper.py", line 65, in <module>
+LLSUB_RANK=10:     generate(args)
+LLSUB_RANK=10:   File "/home/gridsan/myau/automaton/generate_mdp.py", line 43, in generate
+LLSUB_RANK=10:     np_data = dataset.generate_batch(batch_size * train_batches)
+LLSUB_RANK=10:   File "/home/gridsan/myau/automaton/mdp.py", line 86, in generate_batch
+LLSUB_RANK=10:     res = self._generate_batch(bs)
+LLSUB_RANK=10:   File "/home/gridsan/myau/automaton/mdp.py", line 126, in _generate_batch
+LLSUB_RANK=10:     data = self.gen_data(params)
+LLSUB_RANK=10:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 12, in gen_data
+LLSUB_RANK=10:     mdp_data = self.gen_mdp(num_data)
+LLSUB_RANK=10:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 25, in gen_mdp
+LLSUB_RANK=10:     trace_data = self.value_iteration()
+LLSUB_RANK=10:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 186, in value_iteration
+LLSUB_RANK=10:     trace_data[flag:flag+np.size(full_iter)] = full_iter  
+LLSUB_RANK=10: ValueError: could not broadcast input array from shape (42,) into shape (39,)

@@ -1,0 +1,10 @@
+args:  Namespace(op='dfa', train_batches=1000, batch_size=1024, preferred_dtype='int64', compile=False, device=None, mode='random', states=2, alphabet=2, word_length=1, task_id=2, num_tasks=48, num_files=1)
+args:  {'states': 4, 'iteration': 2}
+LLSUB_RANK=2: Traceback (most recent call last):
+LLSUB_RANK=2:   File "/home/gridsan/myau/automaton/generate_mdp_wrapper.py", line 67, in <module>
+LLSUB_RANK=2:     generate(args)
+LLSUB_RANK=2:   File "/home/gridsan/myau/automaton/generate_mdp.py", line 36, in generate
+LLSUB_RANK=2:     dataset = make_program(args)
+LLSUB_RANK=2:   File "/home/gridsan/myau/automaton/generate_mdp.py", line 28, in make_program
+LLSUB_RANK=2:     iterations = args.iterations, 
+LLSUB_RANK=2: AttributeError: 'Namespace' object has no attribute 'iterations'

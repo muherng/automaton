@@ -1,0 +1,128 @@
+LLSUB_RANK=4: Traceback (most recent call last):
+LLSUB_RANK=4:   File "/home/gridsan/myau/automaton/generate_mdp_wrapper.py", line 65, in <module>
+LLSUB_RANK=4:     generate(args)
+LLSUB_RANK=4:   File "/home/gridsan/myau/automaton/generate_mdp.py", line 43, in generate
+LLSUB_RANK=4:     np_data = dataset.generate_batch(batch_size * train_batches)
+LLSUB_RANK=4:   File "/home/gridsan/myau/automaton/mdp.py", line 86, in generate_batch
+LLSUB_RANK=4:     res = self._generate_batch(bs)
+LLSUB_RANK=4:   File "/home/gridsan/myau/automaton/mdp.py", line 126, in _generate_batch
+LLSUB_RANK=4:     data = self.gen_data(params)
+LLSUB_RANK=4:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 12, in gen_data
+LLSUB_RANK=4:     mdp_data = self.gen_mdp(num_data)
+LLSUB_RANK=4:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 25, in gen_mdp
+LLSUB_RANK=4:     trace_data = self.value_iteration()
+LLSUB_RANK=4:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 186, in value_iteration
+LLSUB_RANK=4:     trace_data[flag:flag+np.size(full_iter)] = full_iter  
+LLSUB_RANK=4: ValueError: could not broadcast input array from shape (42,) into shape (39,)
+LLSUB_RANK=9: Traceback (most recent call last):
+LLSUB_RANK=9:   File "/home/gridsan/myau/automaton/generate_mdp_wrapper.py", line 65, in <module>
+LLSUB_RANK=9:     generate(args)
+LLSUB_RANK=9:   File "/home/gridsan/myau/automaton/generate_mdp.py", line 43, in generate
+LLSUB_RANK=9:     np_data = dataset.generate_batch(batch_size * train_batches)
+LLSUB_RANK=9:   File "/home/gridsan/myau/automaton/mdp.py", line 86, in generate_batch
+LLSUB_RANK=9:     res = self._generate_batch(bs)
+LLSUB_RANK=9:   File "/home/gridsan/myau/automaton/mdp.py", line 126, in _generate_batch
+LLSUB_RANK=9:     data = self.gen_data(params)
+LLSUB_RANK=9:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 12, in gen_data
+LLSUB_RANK=9:     mdp_data = self.gen_mdp(num_data)
+LLSUB_RANK=9:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 25, in gen_mdp
+LLSUB_RANK=9:     trace_data = self.value_iteration()
+LLSUB_RANK=9:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 186, in value_iteration
+LLSUB_RANK=9:     trace_data[flag:flag+np.size(full_iter)] = full_iter  
+LLSUB_RANK=9: ValueError: could not broadcast input array from shape (42,) into shape (39,)
+LLSUB_RANK=7: Traceback (most recent call last):
+LLSUB_RANK=7:   File "/home/gridsan/myau/automaton/generate_mdp_wrapper.py", line 65, in <module>
+LLSUB_RANK=7:     generate(args)
+LLSUB_RANK=7:   File "/home/gridsan/myau/automaton/generate_mdp.py", line 43, in generate
+LLSUB_RANK=7:     np_data = dataset.generate_batch(batch_size * train_batches)
+LLSUB_RANK=7:   File "/home/gridsan/myau/automaton/mdp.py", line 86, in generate_batch
+LLSUB_RANK=7:     res = self._generate_batch(bs)
+LLSUB_RANK=7:   File "/home/gridsan/myau/automaton/mdp.py", line 126, in _generate_batch
+LLSUB_RANK=7:     data = self.gen_data(params)
+LLSUB_RANK=7:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 12, in gen_data
+LLSUB_RANK=7:     mdp_data = self.gen_mdp(num_data)
+LLSUB_RANK=7:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 25, in gen_mdp
+LLSUB_RANK=7:     trace_data = self.value_iteration()
+LLSUB_RANK=7:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 186, in value_iteration
+LLSUB_RANK=7:     trace_data[flag:flag+np.size(full_iter)] = full_iter  
+LLSUB_RANK=7: ValueError: could not broadcast input array from shape (42,) into shape (39,)
+LLSUB_RANK=6: Traceback (most recent call last):
+LLSUB_RANK=6:   File "/home/gridsan/myau/automaton/generate_mdp_wrapper.py", line 65, in <module>
+LLSUB_RANK=6:     generate(args)
+LLSUB_RANK=6:   File "/home/gridsan/myau/automaton/generate_mdp.py", line 43, in generate
+LLSUB_RANK=6:     np_data = dataset.generate_batch(batch_size * train_batches)
+LLSUB_RANK=6:   File "/home/gridsan/myau/automaton/mdp.py", line 86, in generate_batch
+LLSUB_RANK=6:     res = self._generate_batch(bs)
+LLSUB_RANK=6:   File "/home/gridsan/myau/automaton/mdp.py", line 126, in _generate_batch
+LLSUB_RANK=6:     data = self.gen_data(params)
+LLSUB_RANK=6:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 12, in gen_data
+LLSUB_RANK=6:     mdp_data = self.gen_mdp(num_data)
+LLSUB_RANK=6:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 25, in gen_mdp
+LLSUB_RANK=6:     trace_data = self.value_iteration()
+LLSUB_RANK=6:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 186, in value_iteration
+LLSUB_RANK=6:     trace_data[flag:flag+np.size(full_iter)] = full_iter  
+LLSUB_RANK=6: ValueError: could not broadcast input array from shape (42,) into shape (39,)
+LLSUB_RANK=11: Traceback (most recent call last):
+LLSUB_RANK=11:   File "/home/gridsan/myau/automaton/generate_mdp_wrapper.py", line 65, in <module>
+LLSUB_RANK=11:     generate(args)
+LLSUB_RANK=11:   File "/home/gridsan/myau/automaton/generate_mdp.py", line 43, in generate
+LLSUB_RANK=11:     np_data = dataset.generate_batch(batch_size * train_batches)
+LLSUB_RANK=11:   File "/home/gridsan/myau/automaton/mdp.py", line 86, in generate_batch
+LLSUB_RANK=11:     res = self._generate_batch(bs)
+LLSUB_RANK=11:   File "/home/gridsan/myau/automaton/mdp.py", line 126, in _generate_batch
+LLSUB_RANK=11:     data = self.gen_data(params)
+LLSUB_RANK=11:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 12, in gen_data
+LLSUB_RANK=11:     mdp_data = self.gen_mdp(num_data)
+LLSUB_RANK=11:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 25, in gen_mdp
+LLSUB_RANK=11:     trace_data = self.value_iteration()
+LLSUB_RANK=11:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 186, in value_iteration
+LLSUB_RANK=11:     trace_data[flag:flag+np.size(full_iter)] = full_iter  
+LLSUB_RANK=11: ValueError: could not broadcast input array from shape (42,) into shape (39,)
+LLSUB_RANK=8: Traceback (most recent call last):
+LLSUB_RANK=8:   File "/home/gridsan/myau/automaton/generate_mdp_wrapper.py", line 65, in <module>
+LLSUB_RANK=8:     generate(args)
+LLSUB_RANK=8:   File "/home/gridsan/myau/automaton/generate_mdp.py", line 43, in generate
+LLSUB_RANK=8:     np_data = dataset.generate_batch(batch_size * train_batches)
+LLSUB_RANK=8:   File "/home/gridsan/myau/automaton/mdp.py", line 86, in generate_batch
+LLSUB_RANK=8:     res = self._generate_batch(bs)
+LLSUB_RANK=8:   File "/home/gridsan/myau/automaton/mdp.py", line 126, in _generate_batch
+LLSUB_RANK=8:     data = self.gen_data(params)
+LLSUB_RANK=8:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 12, in gen_data
+LLSUB_RANK=8:     mdp_data = self.gen_mdp(num_data)
+LLSUB_RANK=8:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 25, in gen_mdp
+LLSUB_RANK=8:     trace_data = self.value_iteration()
+LLSUB_RANK=8:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 186, in value_iteration
+LLSUB_RANK=8:     trace_data[flag:flag+np.size(full_iter)] = full_iter  
+LLSUB_RANK=8: ValueError: could not broadcast input array from shape (42,) into shape (39,)
+LLSUB_RANK=10: Traceback (most recent call last):
+LLSUB_RANK=10:   File "/home/gridsan/myau/automaton/generate_mdp_wrapper.py", line 65, in <module>
+LLSUB_RANK=10:     generate(args)
+LLSUB_RANK=10:   File "/home/gridsan/myau/automaton/generate_mdp.py", line 43, in generate
+LLSUB_RANK=10:     np_data = dataset.generate_batch(batch_size * train_batches)
+LLSUB_RANK=10:   File "/home/gridsan/myau/automaton/mdp.py", line 86, in generate_batch
+LLSUB_RANK=10:     res = self._generate_batch(bs)
+LLSUB_RANK=10:   File "/home/gridsan/myau/automaton/mdp.py", line 126, in _generate_batch
+LLSUB_RANK=10:     data = self.gen_data(params)
+LLSUB_RANK=10:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 12, in gen_data
+LLSUB_RANK=10:     mdp_data = self.gen_mdp(num_data)
+LLSUB_RANK=10:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 25, in gen_mdp
+LLSUB_RANK=10:     trace_data = self.value_iteration()
+LLSUB_RANK=10:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 186, in value_iteration
+LLSUB_RANK=10:     trace_data[flag:flag+np.size(full_iter)] = full_iter  
+LLSUB_RANK=10: ValueError: could not broadcast input array from shape (42,) into shape (39,)
+LLSUB_RANK=5: Traceback (most recent call last):
+LLSUB_RANK=5:   File "/home/gridsan/myau/automaton/generate_mdp_wrapper.py", line 65, in <module>
+LLSUB_RANK=5:     generate(args)
+LLSUB_RANK=5:   File "/home/gridsan/myau/automaton/generate_mdp.py", line 43, in generate
+LLSUB_RANK=5:     np_data = dataset.generate_batch(batch_size * train_batches)
+LLSUB_RANK=5:   File "/home/gridsan/myau/automaton/mdp.py", line 86, in generate_batch
+LLSUB_RANK=5:     res = self._generate_batch(bs)
+LLSUB_RANK=5:   File "/home/gridsan/myau/automaton/mdp.py", line 126, in _generate_batch
+LLSUB_RANK=5:     data = self.gen_data(params)
+LLSUB_RANK=5:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 12, in gen_data
+LLSUB_RANK=5:     mdp_data = self.gen_mdp(num_data)
+LLSUB_RANK=5:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 25, in gen_mdp
+LLSUB_RANK=5:     trace_data = self.value_iteration()
+LLSUB_RANK=5:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 186, in value_iteration
+LLSUB_RANK=5:     trace_data[flag:flag+np.size(full_iter)] = full_iter  
+LLSUB_RANK=5: ValueError: could not broadcast input array from shape (42,) into shape (39,)

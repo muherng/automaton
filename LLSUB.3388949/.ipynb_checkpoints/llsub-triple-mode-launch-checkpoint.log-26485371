@@ -1,0 +1,16 @@
+LLSUB_RANK=0: Traceback (most recent call last):
+LLSUB_RANK=0:   File "/home/gridsan/myau/automaton/generate_mdp_wrapper.py", line 67, in <module>
+LLSUB_RANK=0:     generate(args)
+LLSUB_RANK=0:   File "/home/gridsan/myau/automaton/generate_mdp.py", line 43, in generate
+LLSUB_RANK=0:     np_data = dataset.generate_batch(batch_size * train_batches)
+LLSUB_RANK=0:   File "/home/gridsan/myau/automaton/mdp.py", line 86, in generate_batch
+LLSUB_RANK=0:     res = self._generate_batch(bs)
+LLSUB_RANK=0:   File "/home/gridsan/myau/automaton/mdp.py", line 126, in _generate_batch
+LLSUB_RANK=0:     data = self.gen_data(params)
+LLSUB_RANK=0:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 12, in gen_data
+LLSUB_RANK=0:     mdp_data = self.gen_mdp(num_data)
+LLSUB_RANK=0:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 25, in gen_mdp
+LLSUB_RANK=0:     trace_data = self.value_iteration()
+LLSUB_RANK=0:   File "/home/gridsan/myau/automaton/mdp_constructor.py", line 191, in value_iteration
+LLSUB_RANK=0:     return trace_data[:flag]
+LLSUB_RANK=0: TypeError: 'NoneType' object is not subscriptable
