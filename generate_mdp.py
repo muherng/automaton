@@ -27,6 +27,7 @@ def make_program(args):
         states = args.states,
         iterations = args.iterations, 
         mode = args.mode,
+        gamma = args.discount,
         preferred_dtype=args.preferred_dtype,
     )
     
@@ -118,7 +119,8 @@ if __name__ == "__main__":
     parser.add_argument("--mode", type=str, default='random')
     parser.add_argument("--states",type=int,default=4)
     parser.add_argument("--iterations",type=int,default=1)
-
+    parser.add_argument("--discount",type=int,default=0.5)
+    
     args = parser.parse_args()
     print('args: ', args)
 

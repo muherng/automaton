@@ -121,7 +121,7 @@ class grid_world(mdp):
         }   
 
     def _generate_batch(self,num_data):
-        #TODO: create params
+        #create params
         params = {'num_data': num_data}
         data = self.gen_data(params)
         np.random.shuffle(data)
