@@ -33,7 +33,8 @@ def train_on_data(args,path_to_pretrain = None):
     directory = 'data_aut'
 
     if args.seq == 'enc': 
-        np_data = np.load(directory+f'/s{args.states}i{args.iterations}.npy',mmap_mode='r')
+        discount = int(args.discount*10)
+        np_data = np.load(directory+f'/s{args.states}i{args.iterations}d{discount}.npy',mmap_mode='r')
         model = EncModel(
             ds=dataset,
             kind=args.kind,
@@ -271,6 +272,8 @@ if __name__ == "__main__":
     parser.add_argument("--mode", type=str, default='random')
     parser.add_argument("--states",type=int,default=4)
     parser.add_argument("--iterations",type=int,default=1)
+
+    parser.add_argument("--discount",type=float,default=0.5)
     args = parser.parse_args()
     print('args: ', args)
     train_on_data(args)
