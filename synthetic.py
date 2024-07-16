@@ -5,8 +5,12 @@ import torch.optim as optim
 torch.manual_seed(42)
 
 # Create the fixed matrices P and Q with i.i.d standard normal entries
-true_P = torch.randn(2, 2)
-true_Q = torch.randn(2, 2)
+
+d = 3
+n = 100
+
+true_P = torch.randn(d, d)
+true_Q = torch.randn(d, d)
 
 # Define the function to compute PZ(Z^TQZ)
 def compute_expression(P, Q, Z):
@@ -22,9 +26,7 @@ Z_list = []
 results = []
 
 # Define the coordinate to fit (a, b)
-a, b = 0, 5  # Example: top-left coordinate
-d = 2
-n = 100
+a, b = 0, 1  # Example: top-left coordinate
 for _ in range(num_samples):
     # Generate a random Z with i.i.d standard normal entries
     Z = torch.randn(d, n)
@@ -41,8 +43,8 @@ Z_tensor = torch.stack(Z_list)
 results_tensor = torch.tensor(results)
 
 # Initialize trainable parameters P and Q
-P = torch.randn(2, 2, requires_grad=True)
-Q = torch.randn(2, 2, requires_grad=True)
+P = torch.randn(d, d, requires_grad=True)
+Q = torch.randn(d, d, requires_grad=True)
 
 # Define the optimizer
 optimizer = optim.Adam([P, Q], lr=0.01)
@@ -181,7 +183,7 @@ optimizer = optim.Adam([W], lr=0.01)
 loss_fn = torch.nn.MSELoss()
 
 # Training loop
-num_epochs = 20
+num_epochs = 100
 poly_data = []
 for epoch in range(num_epochs):
     epoch_loss = 0.0
@@ -237,7 +239,7 @@ plt.plot(x1, list1, label='Transformer Landscape', marker='o')
 plt.plot(x2, list2, label='Polynomial Relaxation Landscape', marker='x')
 
 # Set y-axis limits
-plt.ylim(0, 10)
+plt.ylim(0, 100)
 
 # Add labels and title
 plt.xlabel('Epoch')
