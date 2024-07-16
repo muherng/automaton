@@ -133,7 +133,8 @@ class grid_world(mdp):
     def seq(self): 
         #start, equal, end, 5*states*alphabet, 2 + word_length, 5*word_length
         #add 5 more tokens for good measure
-        raise NotImplementedError
+        return 200 
+        #raise NotImplementedError
         #return 3 + 5*self.max_states*self.max_alphabet + 2 + 6*self.max_word_length + 5 
         #return 200
     

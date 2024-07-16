@@ -122,21 +122,22 @@ def enc_load(np_data,args):
     # Assuming np_data is your dataset and args contains batch_size and val_batches
     batch_size = args.batch_size
     val_batches = args.val_batches
-
+    print('one')
     # Calculate the number of validation samples
     val_size = batch_size * val_batches
-
     # Generate a random permutation of indices
     indices = np.random.permutation(np_data.shape[0])
-
+    print('two')
     # Split indices into training and validation sets
     train_indices = indices[val_size:]
     val_indices = indices[:val_size]
-
+    print('three')
     # Create training and validation datasets
-    train_data = np_data[train_indices]
-    val_data = np_data[val_indices]
+    #train_data = np_data[train_indices]
+    #val_data = np_data[val_indices]
 
+    train_data = np_data[val_size:]
+    val_data = np_data[:val_size]
     # Convert to PyTorch tensors
     print('device data: ', device)
     train_data = torch.tensor(train_data).to(device)

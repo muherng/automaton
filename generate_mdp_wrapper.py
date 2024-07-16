@@ -50,8 +50,8 @@ if __name__ == "__main__":
 
     #curriculum dictionary
     #this is sort of bad -- no we just have 72 directories right now no tree
-    for states in [4,9,16]: 
-        for iterations in range(1,5):
+    for states in [25]: 
+        for iterations in range(1,2):
             args_dict = {'states':states,'iterations':iterations}
             data_args.append(args_dict)
     

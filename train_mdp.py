@@ -172,8 +172,10 @@ def enc_training(model, dataset, args, np_data=None):
     # Standard PyTorch Training Loop
     #validaiton accuracy array 
     acc_list = []
+    print('before enc load')
     train_dl, valid_dl = enc_load(np_data,args)
     for epoch in range(args.epochs):
+        print('epoch: ', epoch)
         for chunk in chunked_dataloader(train_dl, chunk_size=50):
             print(f'Processing data chunk with {len(chunk)} batches')
             train_loss = train_enc(model, chunk, optim)
