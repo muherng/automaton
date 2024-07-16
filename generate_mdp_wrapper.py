@@ -52,8 +52,11 @@ if __name__ == "__main__":
     #this is sort of bad -- no we just have 72 directories right now no tree
     for states in [25]: 
         for iterations in range(1,2):
-            args_dict = {'states':states,'iterations':iterations}
-            data_args.append(args_dict)
+            for discount in np.arange(0.5, 1.0, 0.1).tolist(): 
+                args_dict = {'states':states,
+                             'iterations':iterations,
+                             'discount': discount}
+                data_args.append(args_dict)
     
     # Assign indices to this process/task
     my_args = data_args[my_task_id:len(data_args):num_tasks]
@@ -62,5 +65,6 @@ if __name__ == "__main__":
         print('args: ', args_dict)
         args.states = args_dict['states']
         args.iterations = args_dict['iterations']
+        args.discount = args_dict['discount']
         generate(args)
     

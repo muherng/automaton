@@ -52,39 +52,6 @@ optimizer = optim.Adam([P, Q], lr=0.01)
 # Define the loss function (mean squared error)
 loss_fn = torch.nn.MSELoss()
 
-# Training loop
-""" trans_data = []
-num_epochs = 300
-for epoch in range(num_epochs):
-    epoch_loss = 0.0
-    for i in range(num_samples):
-        Z = Z_tensor[i]
-        target = results_tensor[i]
-        
-        # Zero the gradients
-        optimizer.zero_grad()
-        
-        # Forward pass
-        output = compute_expression(P, Q, Z)
-        output_coordinate = output[a, b]
-        
-        # Compute loss
-        loss = loss_fn(output_coordinate, target)
-        
-        # Backward pass
-        loss.backward()
-        
-        # Update parameters
-        optimizer.step()
-        
-        # Accumulate loss
-        epoch_loss += loss.item()
-    
-    # Print average loss for each epoch
-    if (epoch + 1) % 1 == 0:
-        print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss / num_samples:.4f}')
-    trans_data = trans_data + [epoch_loss / num_samples] """
-
 # Define batch size
 batch_size = 32
 
@@ -133,8 +100,7 @@ for epoch in range(num_epochs):
         epoch_loss += batch_loss.item()
     
     # Print average loss for each epoch
-    if (epoch + 1) % 100 == 0:
-        print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss / (num_samples / batch_size):.4f}')
+    print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss / (num_samples / batch_size):.4f}')
     trans_data = trans_data + [epoch_loss / num_samples]
 
 
@@ -142,8 +108,6 @@ for epoch in range(num_epochs):
 # Print the learned parameters
 print("Learned P:", P)
 print("Learned Q:", Q)
-
-import torch
 
 #arguments Z is data matrix
 #argument b is the column 
