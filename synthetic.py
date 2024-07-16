@@ -24,7 +24,7 @@ results = []
 # Define the coordinate to fit (a, b)
 a, b = 0, 5  # Example: top-left coordinate
 d = 2
-n = 30
+n = 100
 for _ in range(num_samples):
     # Generate a random Z with i.i.d standard normal entries
     Z = torch.randn(d, n)
@@ -51,7 +51,8 @@ optimizer = optim.Adam([P, Q], lr=0.01)
 loss_fn = torch.nn.MSELoss()
 
 # Training loop
-num_epochs = 100
+""" trans_data = []
+num_epochs = 300
 for epoch in range(num_epochs):
     epoch_loss = 0.0
     for i in range(num_samples):
@@ -80,6 +81,61 @@ for epoch in range(num_epochs):
     # Print average loss for each epoch
     if (epoch + 1) % 1 == 0:
         print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss / num_samples:.4f}')
+    trans_data = trans_data + [epoch_loss / num_samples] """
+
+# Define batch size
+batch_size = 32
+
+# Training loop
+trans_data = []
+num_epochs = 300
+for epoch in range(num_epochs):
+    epoch_loss = 0.0
+    
+    # Shuffle the dataset at the beginning of each epoch
+    permutation = torch.randperm(num_samples)
+    Z_tensor = Z_tensor[permutation]
+    results_tensor = results_tensor[permutation]
+    
+    for i in range(0, num_samples, batch_size):
+        # Get the mini-batch
+        Z_batch = Z_tensor[i:i+batch_size]
+        target_batch = results_tensor[i:i+batch_size]
+        
+        # Zero the gradients
+        optimizer.zero_grad()
+        
+        batch_loss = 0.0
+        for j in range(Z_batch.size(0)):
+            Z = Z_batch[j]
+            target = target_batch[j]
+            
+            # Forward pass
+            output = compute_expression(P, Q, Z)
+            output_coordinate = output[a, b]
+            
+            # Compute loss
+            loss = loss_fn(output_coordinate, target)
+            batch_loss += loss
+        
+        # Compute the average loss for the batch
+        batch_loss = batch_loss / Z_batch.size(0)
+        
+        # Backward pass
+        batch_loss.backward()
+        
+        # Update parameters
+        optimizer.step()
+        
+        # Accumulate loss
+        epoch_loss += batch_loss.item()
+    
+    # Print average loss for each epoch
+    if (epoch + 1) % 100 == 0:
+        print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss / (num_samples / batch_size):.4f}')
+    trans_data = trans_data + [epoch_loss / num_samples]
+
+
 
 # Print the learned parameters
 print("Learned P:", P)
@@ -125,9 +181,11 @@ optimizer = optim.Adam([W], lr=0.01)
 loss_fn = torch.nn.MSELoss()
 
 # Training loop
-num_epochs = 1000
+num_epochs = 20
+poly_data = []
 for epoch in range(num_epochs):
     epoch_loss = 0.0
+    loss = 0
     for i in range(num_samples):
         Z = Z_tensor[i]
         cov = feature(Z,b)
@@ -148,10 +206,47 @@ for epoch in range(num_epochs):
         # Update parameters
         optimizer.step()
         
-        # Accumulate loss
-        epoch_loss += loss.item()
+    # Accumulate loss
+    epoch_loss += loss.item()
     
     # Print average loss for each epoch
     if (epoch + 1) % 1 == 0:
         print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss / num_samples:.4f}')
+        poly_data = poly_data + [epoch_loss / num_samples]
+
+print('trans_data: ', trans_data)
+print('poly_data: ', poly_data)
+
+import matplotlib.pyplot as plt
+
+# Sample lists of different lengths
+list1 = trans_data
+list2 = poly_data
+
+# Generate x values for each list
+x1 = list(range(len(list1)))
+x2 = list(range(len(list2)))
+
+# Create the plot
+plt.figure(figsize=(10, 6))
+
+# Plot list1
+plt.plot(x1, list1, label='Transformer Landscape', marker='o')
+
+# Plot list2
+plt.plot(x2, list2, label='Polynomial Relaxation Landscape', marker='x')
+
+# Set y-axis limits
+plt.ylim(0, 10)
+
+# Add labels and title
+plt.xlabel('Epoch')
+plt.ylabel('MSE Loss')
+plt.title('Learning One Layer Linear Attention: Adam LR 0.01')
+plt.legend()
+
+# Show the plot
+plt.grid(True)
+plt.show()
+
 
