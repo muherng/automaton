@@ -7,7 +7,7 @@ torch.manual_seed(42)
 
 # Create the fixed matrices P and Q with i.i.d standard normal entries
 
-d = 3
+d = 2
 n = 100
 
 true_P = torch.randn(d, d)
@@ -44,78 +44,7 @@ Z_tensor = torch.stack(Z_list)
 results_tensor = torch.tensor(results)  
 num_epochs = 5000
 moe_data = np.zeros((2,num_epochs))
-for experts in range(1,3): 
-    P_experts = torch.randn(d,d,experts,requires_grad=True)
-    Q_experts = torch.randn(d,d,experts,requires_grad=True)
-
-    # Define the optimizer
-    optimizer = optim.Adam([P_experts, Q_experts], lr=0.01)
-
-    # Define the loss function (mean squared error)
-    loss_fn = torch.nn.MSELoss()
-
-    # Define batch size
-    batch_size = 256
-
-    # Training loop
-    data = []
-    for epoch in range(num_epochs):
-        epoch_loss = 0.0
-        
-        # Shuffle the dataset at the beginning of each epoch
-        permutation = torch.randperm(num_samples)
-        Z_tensor = Z_tensor[permutation]
-        results_tensor = results_tensor[permutation]
-        
-        for i in range(0, num_samples, batch_size):
-            # Get the mini-batch
-            Z_batch = Z_tensor[i:i+batch_size]
-            target_batch = results_tensor[i:i+batch_size]
-            
-            # Zero the gradients
-            optimizer.zero_grad()
-            
-            batch_loss = 0.0
-            for j in range(Z_batch.size(0)):
-                Z = Z_batch[j]
-                target = target_batch[j]
-                
-                # Forward pass
-                for expert in range(experts):
-                    P = P_experts[:,:,expert]
-                    Q = Q_experts[:,:,expert] 
-                    if expert == 0:
-                        output = compute_expression(P, Q, Z)
-                    else: 
-                        output = output + compute_expression(P, Q, Z)
-                output_coordinate = output[a, b]
-                
-                # Compute loss
-                loss = loss_fn(output_coordinate, target)
-                batch_loss += loss
-            
-            # Compute the average loss for the batch
-            batch_loss = batch_loss / Z_batch.size(0)
-            
-            # Backward pass
-            batch_loss.backward()
-            
-            # Update parameters
-            optimizer.step()
-            
-            # Accumulate loss
-            epoch_loss += batch_loss.item()
-        
-        # Print average loss for each epoch
-        print(f'{experts} Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss / (num_samples / batch_size):.4f}')
-        data = data + [epoch_loss / (num_samples / batch_size)]
-    moe_data[experts-1,:] = data
-
-
-
-# Print the learned parameters
-print("Learned P:", P)
-print("Learned Q:", Q)
+#truth = np.zeros(d**3)
 
 #arguments Z is data matrix
 #argument b is the column 
@@ -132,17 +61,18 @@ def feature(Z,b):
     """
     d, n = Z.shape
     v = torch.zeros(d**3)
-
+    truth = np.zeros(d**3)
     for j in range(d):
         for k in range(d):
             for l in range(d):
+                truth[j * d * d + k * d + l] = true_P[a,j] * true_Q[k,l]
                 v[j * d * d + k * d + l] = torch.inner(Z[j], Z[k]) * Z[l,b]
     
-    return v
+    return v,truth
 
 # Example usage
 Z = torch.randn(d, n)
-v = feature(Z,b)
+v,truth = feature(Z,b)
 print(v)
 
 # Initialize trainable parameters P and Q
@@ -155,14 +85,14 @@ optimizer = optim.Adam([W], lr=0.01)
 loss_fn = torch.nn.MSELoss()
 
 # Training loop
-num_epochs = 100
+num_epochs = 20
 poly_data = []
 for epoch in range(num_epochs):
     epoch_loss = 0.0
     loss = 0
     for i in range(num_samples):
         Z = Z_tensor[i]
-        cov = feature(Z,b)
+        cov,_ = feature(Z,b)
         target = results_tensor[i]
         
         # Zero the gradients
@@ -188,8 +118,6 @@ for epoch in range(num_epochs):
         print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss / num_samples:.4f}')
         poly_data = poly_data + [epoch_loss / num_samples]
 
-print('moe_data: ', moe_data)
-print('poly_data: ', poly_data)
-np.save('moe_data', np.array(moe_data))
-np.save('poly_data', np.array(poly_data))
+print('Learned Regressor: ', W)
+print('Truth: ', truth)
 
