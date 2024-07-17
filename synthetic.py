@@ -7,11 +7,11 @@ torch.manual_seed(42)
 
 # Create the fixed matrices P and Q with i.i.d standard normal entries
 
-d = 3
-n = 100
+d = 3 #dimension of model d by d 
+n = 100 #number of tokens 
 
-true_P = torch.randn(d, d)
-true_Q = torch.randn(d, d)
+true_P = torch.randn(d, d) #ground truth value matrix
+true_Q = torch.randn(d, d) #ground truth key-query matrix
 
 # Define the function to compute PZ(Z^TQZ)
 def compute_expression(P, Q, Z):
@@ -27,7 +27,9 @@ Z_list = []
 results = []
 
 # Define the coordinate to fit (a, b)
-a, b = 0, 1  # Example: top-left coordinate
+a, b = 0, 1  # Example: coordinate (0,1)
+
+#generate synthetic outputs
 for _ in range(num_samples):
     # Generate a random Z with i.i.d standard normal entries
     Z = torch.randn(d, n)
@@ -42,9 +44,12 @@ for _ in range(num_samples):
 # Convert lists to tensors
 Z_tensor = torch.stack(Z_list)
 results_tensor = torch.tensor(results)  
-num_epochs = 5000
-moe_data = np.zeros((2,num_epochs))
-for experts in range(1,3): 
+num_epochs = 1000
+
+#right now test up to two experts 
+max_experts = 2
+moe_data = np.zeros((max_experts,num_epochs))
+for experts in range(1,max_experts+1): 
     P_experts = torch.randn(d,d,experts,requires_grad=True)
     Q_experts = torch.randn(d,d,experts,requires_grad=True)
 
@@ -88,6 +93,7 @@ for experts in range(1,3):
                         output = compute_expression(P, Q, Z)
                     else: 
                         output = output + compute_expression(P, Q, Z)
+                output = output/experts
                 output_coordinate = output[a, b]
                 
                 # Compute loss
@@ -107,16 +113,11 @@ for experts in range(1,3):
             epoch_loss += batch_loss.item()
         
         # Print average loss for each epoch
-        print(f'{experts} Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss / (num_samples / batch_size):.4f}')
+        print(f'Experts: {experts} Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss / (num_samples / batch_size):.4f}')
         data = data + [epoch_loss / (num_samples / batch_size)]
     moe_data[experts-1,:] = data
 
-
-
-# Print the learned parameters
-print("Learned P:", P)
-print("Learned Q:", Q)
-
+#Creates H matrix dependent on Z and the b coordinate of (a,b) 
 #arguments Z is data matrix
 #argument b is the column 
 #feature does not change with a (the row of P_{a:})
@@ -141,11 +142,12 @@ def feature(Z,b):
     return v
 
 # Example usage
-Z = torch.randn(d, n)
-v = feature(Z,b)
-print(v)
+#Z = torch.randn(d, n)
+#v = feature(Z,b)
+#print(v)
 
 # Initialize trainable parameters P and Q
+#d^3 for a'th entry of P, recall only regressing (a,b) coordinate
 W = torch.randn(d**3, requires_grad=True)
 
 # Define the optimizer
