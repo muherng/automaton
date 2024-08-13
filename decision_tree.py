@@ -4,8 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 mode = 'unitary'
-#style = 'unique'
-style = 'degenerate'
+style = 'unique'
+#style = 'degenerate'
 
 
 # Set random seed for reproducibility (optional)
