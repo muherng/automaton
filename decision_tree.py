@@ -103,7 +103,7 @@ for _ in range(num_samples):
 
         shape = (num_tokens,1)
         # Fill the rest of the last column with zeros
-        filler = torch.randn(shape)*0.5
+        filler = torch.randn(shape)*1.0
         last_column = torch.cat((query,filler), dim=0).view(-1,1)
 
         # Concatenate the top and bottom parts with the last column
@@ -175,6 +175,33 @@ def fold_params(P,Q):
             index += 1
     return W
 
+
+def compute_max_min_eigen(Z_tensor, b, num_samples):
+    # Compute the vectors
+    vectors = torch.stack([fold_feature(Z_tensor[i], b) for i in range(num_samples)])
+    
+    # Compute the covariance matrix using torch.cov
+    covariance_matrix = torch.cov(vectors.T)
+    
+    # Compute eigenvalues and eigenvectors using torch.linalg.eigh
+    eigenvalues, eigenvectors = torch.linalg.eigh(covariance_matrix)
+    print('eigenvalues: ', eigenvalues)
+    
+    # Find the maximum and minimum eigenvalues and their corresponding eigenvectors
+    max_eigenvalue, max_index = torch.max(eigenvalues, 0)
+    min_eigenvalue, min_index = torch.min(eigenvalues, 0)
+    
+    max_eigenvector = eigenvectors[:, max_index]
+    min_eigenvector = eigenvectors[:, min_index]
+    
+    return max_eigenvalue.item(), min_eigenvalue.item(), max_eigenvector, min_eigenvector
+
+# Example usage
+max_eigenvalue, min_eigenvalue, max_eigenvector, min_eigenvector = compute_max_min_eigen(Z_tensor, b, num_samples)
+print("Max eigenvalue:", max_eigenvalue)
+print("Min eigenvalue:", min_eigenvalue)
+print("Max eigenvector:", max_eigenvector)
+print("Min eigenvector:", min_eigenvector)
 
 # Initialize trainable parameters P and Q
 #d^3 for a'th entry of P, recall only regressing (a,b) coordinate
@@ -266,4 +293,5 @@ for i in range(10):
 #print('poly_data: ', poly_data)
 #np.save('moe_data', np.array(moe_data))
 #np.save('poly_data', np.array(poly_data))
+
 
