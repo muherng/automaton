@@ -44,7 +44,7 @@ def compute_expression(P, Q, Z):
     return result
 
 # Number of random choices of Z
-num_samples = 2**12
+num_samples = 2**13
 
 # Initialize lists to store input Z's and results
 Z_list = []
@@ -97,10 +97,13 @@ for _ in range(num_samples):
             query = zero_one[:,1].view(num_tokens,1)
         else: 
             query = zero_one[:,0].view(num_tokens,1)
+        
+        #choose query to be standard normal
+        query = torch.randn(num_tokens,1)
 
         shape = (num_tokens,1)
         # Fill the rest of the last column with zeros
-        filler = torch.randn(shape)*0.1
+        filler = torch.randn(shape)*0.5
         last_column = torch.cat((query,filler), dim=0).view(-1,1)
 
         # Concatenate the top and bottom parts with the last column
@@ -141,19 +144,24 @@ def fold_feature(Z,b):
     d, n = Z.shape
     #{j k} {l} distinct choices for j not equal to k is d choose 2 times d.  
     #number of choices for j = k is d 
-    v = torch.zeros(int(d*d*(d-1)/2))
+    v = torch.zeros(int(d*d*(d-1)/2) + d**2)
     index = 0
     for j in range(d):
         for k in range(j+1, d):
             for l in range(d):
                 v[index] = torch.inner(Z[j], Z[k])*Z[l,b]
                 index += 1
+    
+    for j in range(d):
+        for l in range(d):
+            v[index] = torch.inner(Z[j], Z[j])*Z[l,b]
+            index += 1
     return v
 
 #folds the parameters of P,Q into format given by fold_feature
 def fold_params(P,Q): 
     d = P.shape[0]
-    par = int(d*d*(d-1)/2)
+    par = int(d*d*(d-1)/2 + d**2)
     W = torch.zeros(par)
     index = 0
     for j in range(d):
@@ -161,12 +169,16 @@ def fold_params(P,Q):
             for l in range(d):
                 W[index] = P[a,j]*Q[k,l] + P[a,k]*Q[j,l]
                 index += 1
+    for j in range(d):
+        for l in range(d):
+            W[index] = P[a,j]*Q[j,l]
+            index += 1
     return W
 
 
 # Initialize trainable parameters P and Q
 #d^3 for a'th entry of P, recall only regressing (a,b) coordinate
-par = int(d*d*(d-1)/2)
+par = int(d*d*(d-1)/2 + d**2)
 W = torch.randn(par, requires_grad=True)
 
 # Define the optimizer
@@ -176,7 +188,7 @@ optimizer = optim.Adam([W], lr=0.01)
 loss_fn = torch.nn.MSELoss()
 
 # Training loop
-num_epochs = 20
+num_epochs = 40
 poly_data = []
 batch_size = 32  # Define the batch size
 
