@@ -4,12 +4,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 mode = 'unitary'
-#style = 'unique'
-style = 'degenerate'
+style = 'unique'
+#style = 'degenerate'
 
 
 # Set random seed for reproducibility (optional)
-torch.manual_seed(44)
+torch.manual_seed(47)
 
 # Create the fixed matrices P and Q with i.i.d standard normal entries
 
@@ -51,30 +51,52 @@ results = []
 a, b = int(d/2), n-1  # Example: coordinate (3,3)
 print('a: ', a)
 print('b: ', b)
+def random_unitary_matrix(size):
+    q, _ = torch.qr(torch.randn(size, size))
+    return q
+zero_one = random_unitary_matrix(num_tokens)
+zero = zero_one[:,0].view(num_tokens,1)
+one = zero_one[:,1].view(num_tokens,1)
+zero_mat = torch.cat((zero, zero), dim=1) 
+one_mat = torch.cat((one, one), dim=1)
+
+print('zero_one: ', zero_one)
+print('zero mat: ', zero_mat)
+print('one mat: ', one_mat)
 #generate synthetic outputs
 for _ in range(num_samples):
-    # Generate a random Z with i.i.d standard normal entries
-    #Z = 2 * torch.randint(0, 2, (d, n), dtype=torch.float) - 1
-    #Z =  torch.randint(1, 2, (d, n), dtype=torch.float)
-    # Function to generate a random unitary matrix
-    if mode == 'boolean':
-        # Generate a random Z with i.i.d. standard normal entries
-        Z = 2 * torch.randint(0, 2, (d, n), dtype=torch.float) - 1
     if mode == 'unitary':
-        def random_unitary_matrix(size):
-            q, _ = torch.qr(torch.randn(size, size))
-            return q
-
         # Generate the top and bottom parts as random unitary matrices
         if style == 'unique': 
-            top = random_unitary_matrix(num_tokens)
-            bottom = random_unitary_matrix(num_tokens)
+            top = zero_one
+            prob = torch.tensor([0.5, 0.5])
+            sample = torch.bernoulli(prob)
+            print('sample: ', sample)
+            first = zero_one[:,int(sample[0])].view(num_tokens,1)
+            second = zero_one[:,int(sample[1])].view(num_tokens,1)
+            bottom = torch.cat((first,second), dim=1)  
+            #print('bottom: ', bottom)
         if style == 'degenerate':
-            top = random_unitary_matrix(num_tokens)
-            bottom = top
+            top = zero_one
+            # Define the probability tensor with probability 1/2
+            prob = torch.tensor([0.5])
+            # Draw a sample from the Bernoulli distribution
+            sample = torch.bernoulli(prob)
+            if sample == 1:
+                bottom = one_mat
+            else: 
+                bottom = zero_mat 
+        # Generate the last column as zero or one with probability 1/2
+        prob = torch.tensor([0.5])
+        # Draw a sample from the Bernoulli distribution
+        sample = torch.bernoulli(prob)
+        if sample == 1:
+            query = zero_one[:,1].view(num_tokens,1)
+        else: 
+            query = zero_one[:,0].view(num_tokens,1)
 
-        # Generate the last column with i.i.d. standard normal entries
-        last_column = torch.randn(d, 1)
+        shape = (num_tokens,1)
+        last_column = torch.cat((query,torch.randn(shape)), dim=0).view(-1,1)
 
         # Concatenate the top and bottom parts with the last column
         Z = torch.cat((torch.cat((top, bottom), dim=0), last_column), dim=1)
@@ -295,3 +317,4 @@ def debug(target_regressor, Z, b):
 #print('poly_data: ', poly_data)
 #np.save('moe_data', np.array(moe_data))
 #np.save('poly_data', np.array(poly_data))
+
