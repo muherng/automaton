@@ -38,10 +38,13 @@ print('true_Q: ', true_Q)
 def compute_expression(P, Q, Z):
     ZTQZ = torch.matmul(torch.matmul(Z.T, Q), Z)
     result = torch.matmul(P, torch.matmul(Z, ZTQZ))
+    #print('QZ: ', torch.matmul(Q,Z))
+    #print('PZ: ', torch.matmul(P,Z))
+    #print('Z^TQZ: ', ZTQZ)
     return result
 
 # Number of random choices of Z
-num_samples = 2**10
+num_samples = 2**12
 
 # Initialize lists to store input Z's and results
 Z_list = []
@@ -54,17 +57,17 @@ print('b: ', b)
 def random_unitary_matrix(size):
     q, _ = torch.qr(torch.randn(size, size))
     return q
-zero_one = random_unitary_matrix(num_tokens)
-zero = zero_one[:,0].view(num_tokens,1)
-one = zero_one[:,1].view(num_tokens,1)
-zero_mat = torch.cat((zero, zero), dim=1) 
-one_mat = torch.cat((one, one), dim=1)
-
-print('zero_one: ', zero_one)
-print('zero mat: ', zero_mat)
-print('one mat: ', one_mat)
 #generate synthetic outputs
 for _ in range(num_samples):
+    zero_one = random_unitary_matrix(num_tokens)
+    zero = zero_one[:,0].view(num_tokens,1)
+    one = zero_one[:,1].view(num_tokens,1)
+    zero_mat = torch.cat((zero, zero), dim=1) 
+    one_mat = torch.cat((one, one), dim=1)
+
+    print('zero_one: ', zero_one)
+    print('zero mat: ', zero_mat)
+    print('one mat: ', one_mat)
     if mode == 'unitary':
         # Generate the top and bottom parts as random unitary matrices
         if style == 'unique': 
@@ -96,7 +99,9 @@ for _ in range(num_samples):
             query = zero_one[:,0].view(num_tokens,1)
 
         shape = (num_tokens,1)
-        last_column = torch.cat((query,torch.randn(shape)), dim=0).view(-1,1)
+        # Fill the rest of the last column with zeros
+        filler = torch.randn(shape)*0.1
+        last_column = torch.cat((query,filler), dim=0).view(-1,1)
 
         # Concatenate the top and bottom parts with the last column
         Z = torch.cat((torch.cat((top, bottom), dim=0), last_column), dim=1)
@@ -108,83 +113,15 @@ for _ in range(num_samples):
     
     # Store the Z and the specific coordinate result
     Z_list.append(Z)
+    print('result: ', result)
+    print('result total: ', result[a:a+2,b])
     results.append(result[a, b])
+    #raise ValueError('stop here')
 
 # Convert lists to tensors
 Z_tensor = torch.stack(Z_list)
 results_tensor = torch.tensor(results)  
-num_epochs = 1
-
-#right now test up to two experts 
-max_experts = 2
-moe_data = np.zeros((max_experts,num_epochs))
-for experts in range(1,max_experts+1): 
-    P_experts = torch.randn(d,d,experts,requires_grad=True)
-    Q_experts = torch.randn(d,d,experts,requires_grad=True)
-
-    # Define the optimizer
-    optimizer = optim.Adam([P_experts, Q_experts], lr=0.01)
-
-    # Define the loss function (mean squared error)
-    loss_fn = torch.nn.MSELoss()
-
-    # Define batch size
-    batch_size = 256
-
-    # Training loop
-    data = []
-    for epoch in range(num_epochs):
-        epoch_loss = 0.0
-        
-        # Shuffle the dataset at the beginning of each epoch
-        permutation = torch.randperm(num_samples)
-        Z_tensor = Z_tensor[permutation]
-        results_tensor = results_tensor[permutation]
-        
-        for i in range(0, num_samples, batch_size):
-            # Get the mini-batch
-            Z_batch = Z_tensor[i:i+batch_size]
-            target_batch = results_tensor[i:i+batch_size]
-            
-            # Zero the gradients
-            optimizer.zero_grad()
-            
-            batch_loss = 0.0
-            for j in range(Z_batch.size(0)):
-                Z = Z_batch[j]
-                target = target_batch[j]
-                
-                # Forward pass
-                for expert in range(experts):
-                    P = P_experts[:,:,expert]
-                    Q = Q_experts[:,:,expert] 
-                    if expert == 0:
-                        output = compute_expression(P, Q, Z)
-                    else: 
-                        output = output + compute_expression(P, Q, Z)
-                output = output/experts
-                output_coordinate = output[a, b]
-                
-                # Compute loss
-                loss = loss_fn(output_coordinate, target)
-                batch_loss += loss
-            
-            # Compute the average loss for the batch
-            batch_loss = batch_loss / Z_batch.size(0)
-            
-            # Backward pass
-            batch_loss.backward()
-            
-            # Update parameters
-            optimizer.step()
-            
-            # Accumulate loss
-            epoch_loss += batch_loss.item()
-        
-        # Print average loss for each epoch
-        print(f'Experts: {experts} Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss / (num_samples / batch_size):.4f}')
-        data = data + [epoch_loss / (num_samples / batch_size)]
-    moe_data[experts-1,:] = data
+print('results_tensor: ', results_tensor)
 
 #Creates H matrix dependent on Z and the b coordinate of (a,b) 
 #arguments Z is data matrix
@@ -239,38 +176,45 @@ optimizer = optim.Adam([W], lr=0.01)
 loss_fn = torch.nn.MSELoss()
 
 # Training loop
-num_epochs = 5
+num_epochs = 20
 poly_data = []
+batch_size = 32  # Define the batch size
+
+# Training loop
 for epoch in range(num_epochs):
     epoch_loss = 0.0
-    loss = 0
-    for i in range(num_samples):
-        Z = Z_tensor[i]
-        cov = fold_feature(Z,b)
-        target = results_tensor[i]
-        
+    num_batches = (num_samples + batch_size - 1) // batch_size  # Calculate the number of batches
+
+    for batch_idx in range(num_batches):
+        start_idx = batch_idx * batch_size
+        end_idx = min(start_idx + batch_size, num_samples)
+
+        # Get the batch data
+        batch_covariances = torch.stack([fold_feature(Z_tensor[i], b) for i in range(start_idx, end_idx)])
+        batch_results = results_tensor[start_idx:end_idx]
+
         # Zero the gradients
         optimizer.zero_grad()
-        
-        # Forward pass
-        output = torch.inner(W,cov)
-        
-        # Compute loss
-        loss = loss_fn(output, target)
-        
+
+        # Forward pass for the batch
+        batch_outputs = torch.matmul(batch_covariances, W)
+
+        # Compute loss for the batch
+        loss = loss_fn(batch_outputs, batch_results)
+
         # Backward pass
         loss.backward()
-        
+
         # Update parameters
         optimizer.step()
-        
-    # Accumulate loss
-    epoch_loss += loss.item()
-    
+
+        # Accumulate loss
+        epoch_loss += loss.item()
+
     # Print average loss for each epoch
     if (epoch + 1) % 1 == 0:
-        print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss / num_samples:.4f}')
-        poly_data = poly_data + [epoch_loss / num_samples]
+        print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss:.4f}')
+        poly_data = poly_data + [epoch_loss]
 
 target_regressor = fold_params(true_P,true_Q)
 print('ground truth coefficients: ', target_regressor)
@@ -282,12 +226,12 @@ print('l1 error: ', l1error)
 W_flat = W.flatten().detach().numpy()
 
 # Create a bar plot
-""" plt.figure(figsize=(10, 6))
+plt.figure(figsize=(10, 6))
 plt.bar(range(len(W_flat)), W_flat)
 plt.xlabel('Index')
 plt.ylabel('Value')
 plt.title('Bar Plot of Each Coefficient')
-plt.show() """
+plt.show()
 
 #check if inner product of target_regressor and fold_feature(Z,b)
 #is equal to the target value 
