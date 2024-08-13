@@ -1,6 +1,12 @@
 import torch
 import torch.optim as optim
 import numpy as np
+import matplotlib.pyplot as plt
+
+mode = 'unitary'
+#style = 'unique'
+style = 'degenerate'
+
 
 # Set random seed for reproducibility (optional)
 torch.manual_seed(44)
@@ -8,10 +14,25 @@ torch.manual_seed(44)
 # Create the fixed matrices P and Q with i.i.d standard normal entries
 
 d = 4 #dimension of model d by d 
-n = 100 #number of tokens 
+n = int(d/2) + 1 #number of tokens 
+num_tokens = int(d/2) 
 
-true_P = torch.rand(d, d) #ground truth value matrix
-true_Q = torch.randn(d, d) #ground truth key-query matrix
+# Create the identity and zero matrices once
+I = torch.eye(num_tokens)
+zero_matrix = torch.zeros(num_tokens, num_tokens)
+
+# Construct the 2d by 2d matrix
+top_row = torch.cat((zero_matrix, zero_matrix), dim=1)
+bottom_row = torch.cat((zero_matrix, I), dim=1)
+true_P = torch.cat((top_row, bottom_row), dim=0)
+
+# If you need to create another similar matrix, you can reuse I and zero_matrix
+top_row = torch.cat((I, zero_matrix), dim=1)
+bottom_row = torch.cat((zero_matrix, zero_matrix), dim=1)
+true_Q = torch.cat((top_row, bottom_row), dim=0)
+
+print('true_P: ', true_P)
+print('true_Q: ', true_Q)
 
 # Define the function to compute PZ(Z^TQZ)
 def compute_expression(P, Q, Z):
@@ -20,20 +41,45 @@ def compute_expression(P, Q, Z):
     return result
 
 # Number of random choices of Z
-num_samples = 512
+num_samples = 2**11
 
 # Initialize lists to store input Z's and results
 Z_list = []
 results = []
 
 # Define the coordinate to fit (a, b)
-a, b = 0, 1  # Example: coordinate (0,1)
-
+a, b = int(d/2), n-1  # Example: coordinate (3,3)
+print('a: ', a)
+print('b: ', b)
 #generate synthetic outputs
 for _ in range(num_samples):
     # Generate a random Z with i.i.d standard normal entries
-    Z = 2 * torch.randint(0, 2, (d, n), dtype=torch.float) - 1
-    print(Z)
+    #Z = 2 * torch.randint(0, 2, (d, n), dtype=torch.float) - 1
+    #Z =  torch.randint(1, 2, (d, n), dtype=torch.float)
+    # Function to generate a random unitary matrix
+    if mode == 'boolean':
+        # Generate a random Z with i.i.d. standard normal entries
+        Z = 2 * torch.randint(0, 2, (d, n), dtype=torch.float) - 1
+    if mode == 'unitary':
+        def random_unitary_matrix(size):
+            q, _ = torch.qr(torch.randn(size, size))
+            return q
+
+        # Generate the top and bottom parts as random unitary matrices
+        if style == 'unique': 
+            top = random_unitary_matrix(num_tokens)
+            bottom = random_unitary_matrix(num_tokens)
+        if style == 'degenerate':
+            top = random_unitary_matrix(num_tokens)
+            bottom = top
+
+        # Generate the last column with i.i.d. standard normal entries
+        last_column = torch.randn(d, 1)
+
+        # Concatenate the top and bottom parts with the last column
+        Z = torch.cat((torch.cat((top, bottom), dim=0), last_column), dim=1)
+    
+    print('Z: ', Z)
     
     # Compute PZ(Z^TQZ) with true parameters
     result = compute_expression(true_P, true_Q, Z)
@@ -180,7 +226,7 @@ optimizer = optim.Adam([W], lr=0.01)
 loss_fn = torch.nn.MSELoss()
 
 # Training loop
-num_epochs = 100
+num_epochs = 20
 poly_data = []
 for epoch in range(num_epochs):
     epoch_loss = 0.0
@@ -214,10 +260,21 @@ for epoch in range(num_epochs):
         poly_data = poly_data + [epoch_loss / num_samples]
 
 target_regressor = fold_params(true_P,true_Q)
-print('ground truth regressor: ', target_regressor)
+print('ground truth coefficients: ', target_regressor)
 print('learned regressor: ', W)
-l2error = torch.dist(target_regressor, W,p=2)
-print('l2 error: ', l2error)
+l1error = torch.dist(target_regressor, W,p=1)
+print('l1 error: ', l1error)
+
+# Flatten the W tensor to get a 1D array of its entries
+W_flat = W.flatten().detach().numpy()
+
+# Create a bar plot
+plt.figure(figsize=(10, 6))
+plt.bar(range(len(W_flat)), W_flat)
+plt.xlabel('Index')
+plt.ylabel('Value')
+plt.title('Bar Plot of Each Coefficient')
+plt.show()
 
 #check if inner product of target_regressor and fold_feature(Z,b)
 #is equal to the target value 
