@@ -41,7 +41,7 @@ def compute_expression(P, Q, Z):
     return result
 
 # Number of random choices of Z
-num_samples = 2**11
+num_samples = 2**10
 
 # Initialize lists to store input Z's and results
 Z_list = []
@@ -204,24 +204,19 @@ def fold_feature(Z,b):
     d, n = Z.shape
     #{j k} {l} distinct choices for j not equal to k is d choose 2 times d.  
     #number of choices for j = k is d 
-    v = torch.zeros(int(d*d*(d-1)/2 + d))
+    v = torch.zeros(int(d*d*(d-1)/2))
     index = 0
     for j in range(d):
         for k in range(j+1, d):
             for l in range(d):
                 v[index] = torch.inner(Z[j], Z[k])*Z[l,b]
                 index += 1
-            
-    for l in range(d):
-        v[index] = n*Z[l,b]
-        index += 1
-    
     return v
 
 #folds the parameters of P,Q into format given by fold_feature
 def fold_params(P,Q): 
     d = P.shape[0]
-    par = int(d*d*(d-1)/2 + d)
+    par = int(d*d*(d-1)/2)
     W = torch.zeros(par)
     index = 0
     for j in range(d):
@@ -229,16 +224,12 @@ def fold_params(P,Q):
             for l in range(d):
                 W[index] = P[a,j]*Q[k,l] + P[a,k]*Q[j,l]
                 index += 1
-    for l in range(d):
-        for j in range(d): 
-            W[index] += P[a,j]*Q[j,l]
-        index += 1
     return W
 
 
 # Initialize trainable parameters P and Q
 #d^3 for a'th entry of P, recall only regressing (a,b) coordinate
-par = int(d*d*(d-1)/2 + d)
+par = int(d*d*(d-1)/2)
 W = torch.randn(par, requires_grad=True)
 
 # Define the optimizer
@@ -248,7 +239,7 @@ optimizer = optim.Adam([W], lr=0.01)
 loss_fn = torch.nn.MSELoss()
 
 # Training loop
-num_epochs = 20
+num_epochs = 5
 poly_data = []
 for epoch in range(num_epochs):
     epoch_loss = 0.0
@@ -291,27 +282,29 @@ print('l1 error: ', l1error)
 W_flat = W.flatten().detach().numpy()
 
 # Create a bar plot
-plt.figure(figsize=(10, 6))
+""" plt.figure(figsize=(10, 6))
 plt.bar(range(len(W_flat)), W_flat)
 plt.xlabel('Index')
 plt.ylabel('Value')
 plt.title('Bar Plot of Each Coefficient')
-plt.show()
+plt.show() """
 
 #check if inner product of target_regressor and fold_feature(Z,b)
 #is equal to the target value 
 def debug(target_regressor, Z, b):
     cov = fold_feature(Z,b)
     print('inner product: ', torch.inner(target_regressor, cov))
-    print('target value: ', results_tensor[0])
+    #print('target value: ', results_tensor[0])
 
 #loop over results_tensor and check if debug function works 
-#for i in range(1):
-#    Z = Z_tensor[i]
-#    cov = fold_feature(Z,b)
-#    print('cov: ', cov)
-#    print('inner product: ', torch.inner(target_regressor, cov))
-#    print('target value: ', results_tensor[i])
+for i in range(10):
+   Z = Z_tensor[i]
+   cov = fold_feature(Z,b)
+   print('iteration: ', i)
+   print('cov: ', cov)
+   print('learned label: ', torch.inner(W, cov))
+   print('debug label: ', torch.inner(target_regressor, cov))
+   print('true label: ', results_tensor[i])
 
 #print('moe_data: ', moe_data)
 #print('poly_data: ', poly_data)
