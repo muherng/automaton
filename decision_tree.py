@@ -4,8 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 mode = 'unitary'
-style = 'unique'
-#style = 'degenerate'
+#style = 'unique'
+style = 'degenerate'
 
 
 # Set random seed for reproducibility (optional)
@@ -188,7 +188,7 @@ optimizer = optim.Adam([W], lr=0.01)
 loss_fn = torch.nn.MSELoss()
 
 # Training loop
-num_epochs = 40
+num_epochs = 20
 poly_data = []
 batch_size = 32  # Define the batch size
 
