@@ -44,7 +44,7 @@ def compute_expression(P, Q, Z):
     return result
 
 # Number of random choices of Z
-num_samples = 2**13
+num_samples = 2**12
 
 # Initialize lists to store input Z's and results
 Z_list = []
@@ -58,6 +58,10 @@ def random_unitary_matrix(size):
     q, _ = torch.qr(torch.randn(size, size))
     return q
 #generate synthetic outputs
+#regenerating the unitary matrix for every sample 
+#is critical for uniqueness of the regressor
+#both unique and degnerate styles work
+#when unitary matrix is fixed, the regressor is not unique
 for _ in range(num_samples):
     zero_one = random_unitary_matrix(num_tokens)
     zero = zero_one[:,0].view(num_tokens,1)
@@ -72,15 +76,15 @@ for _ in range(num_samples):
         # Generate the top and bottom parts as random unitary matrices
         if style == 'unique': 
             top = zero_one
-            """ prob = torch.tensor([0.5, 0.5])
+            prob = torch.tensor([0.5, 0.5])
             sample = torch.bernoulli(prob)
-            print('sample: ', sample)
+            #print('sample: ', sample)
             first = zero_one[:,int(sample[0])].view(num_tokens,1)
             second = zero_one[:,int(sample[1])].view(num_tokens,1)
-            bottom = torch.cat((first,second), dim=1)   """
+            bottom = torch.cat((first,second), dim=1)  
             #print('bottom: ', bottom)
-            top = torch.randn((num_tokens,num_tokens))
-            bottom = torch.randn((num_tokens,num_tokens))
+            #top = torch.randn((num_tokens,num_tokens))
+            #bottom = torch.randn((num_tokens,num_tokens))
         if style == 'degenerate':
             top = zero_one
             # Define the probability tensor with probability 1/2
@@ -91,6 +95,8 @@ for _ in range(num_samples):
                 bottom = one_mat
             else: 
                 bottom = zero_mat 
+            #bottom = one_mat
+            #bottom = top
         # Generate the last column as zero or one with probability 1/2
         prob = torch.tensor([0.5])
         # Draw a sample from the Bernoulli distribution
@@ -219,7 +225,7 @@ optimizer = optim.Adam([W], lr=0.01)
 loss_fn = torch.nn.MSELoss()
 
 # Training loop
-num_epochs = 20
+num_epochs = 80
 poly_data = []
 batch_size = 32  # Define the batch size
 
