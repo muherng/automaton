@@ -4,8 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 mode = 'unitary'
-style = 'unique'
-#style = 'degenerate'
+#style = 'unique'
+style = 'degenerate'
 
 
 # Set random seed for reproducibility (optional)
@@ -65,20 +65,22 @@ for _ in range(num_samples):
     zero_mat = torch.cat((zero, zero), dim=1) 
     one_mat = torch.cat((one, one), dim=1)
 
-    print('zero_one: ', zero_one)
-    print('zero mat: ', zero_mat)
-    print('one mat: ', one_mat)
+    #print('zero_one: ', zero_one)
+    #print('zero mat: ', zero_mat)
+    #print('one mat: ', one_mat)
     if mode == 'unitary':
         # Generate the top and bottom parts as random unitary matrices
         if style == 'unique': 
             top = zero_one
-            prob = torch.tensor([0.5, 0.5])
+            """ prob = torch.tensor([0.5, 0.5])
             sample = torch.bernoulli(prob)
             print('sample: ', sample)
             first = zero_one[:,int(sample[0])].view(num_tokens,1)
             second = zero_one[:,int(sample[1])].view(num_tokens,1)
-            bottom = torch.cat((first,second), dim=1)  
+            bottom = torch.cat((first,second), dim=1)   """
             #print('bottom: ', bottom)
+            top = torch.randn((num_tokens,num_tokens))
+            bottom = torch.randn((num_tokens,num_tokens))
         if style == 'degenerate':
             top = zero_one
             # Define the probability tensor with probability 1/2
@@ -109,15 +111,15 @@ for _ in range(num_samples):
         # Concatenate the top and bottom parts with the last column
         Z = torch.cat((torch.cat((top, bottom), dim=0), last_column), dim=1)
     
-    print('Z: ', Z)
+    #print('Z: ', Z)
     
     # Compute PZ(Z^TQZ) with true parameters
     result = compute_expression(true_P, true_Q, Z)
     
     # Store the Z and the specific coordinate result
     Z_list.append(Z)
-    print('result: ', result)
-    print('result total: ', result[a:a+2,b])
+    #print('result: ', result)
+    #print('result total: ', result[a:a+2,b])
     results.append(result[a, b])
     #raise ValueError('stop here')
 
@@ -182,6 +184,8 @@ def compute_max_min_eigen(Z_tensor, b, num_samples):
     
     # Compute the covariance matrix using torch.cov
     covariance_matrix = torch.cov(vectors.T)
+
+    print('cov shape: ', covariance_matrix.shape)
     
     # Compute eigenvalues and eigenvectors using torch.linalg.eigh
     eigenvalues, eigenvectors = torch.linalg.eigh(covariance_matrix)
@@ -280,7 +284,7 @@ def debug(target_regressor, Z, b):
     #print('target value: ', results_tensor[0])
 
 #loop over results_tensor and check if debug function works 
-for i in range(10):
+for i in range(1):
    Z = Z_tensor[i]
    cov = fold_feature(Z,b)
    print('iteration: ', i)
