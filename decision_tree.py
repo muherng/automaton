@@ -62,12 +62,16 @@ def random_unitary_matrix(size):
 #is critical for uniqueness of the regressor
 #both unique and degnerate styles work
 #when unitary matrix is fixed, the regressor is not unique
+#Brutal Truth: if query is selected from the unitary matrix, the regressor is always degenerate
+#takeaways: if you can imagine a "DLA program" that generates the data,
+#that is not the generating program, then the estimator is degenerate
 for _ in range(num_samples):
     zero_one = random_unitary_matrix(num_tokens)
     zero = zero_one[:,0].view(num_tokens,1)
     one = zero_one[:,1].view(num_tokens,1)
     zero_mat = torch.cat((zero, zero), dim=1) 
     one_mat = torch.cat((one, one), dim=1)
+    one_zero = torch.cat((one, zero), dim=1)
 
     #print('zero_one: ', zero_one)
     #print('zero mat: ', zero_mat)
@@ -85,29 +89,31 @@ for _ in range(num_samples):
             #print('bottom: ', bottom)
             #top = torch.randn((num_tokens,num_tokens))
             #bottom = torch.randn((num_tokens,num_tokens))
+            #choose query to be standard normal
+            query = torch.randn(num_tokens,1)
         if style == 'degenerate':
             top = zero_one
             # Define the probability tensor with probability 1/2
             prob = torch.tensor([0.5])
             # Draw a sample from the Bernoulli distribution
-            sample = torch.bernoulli(prob)
+            #this is shockingly ok 
+            """ sample = torch.bernoulli(prob)
             if sample == 1:
                 bottom = one_mat
             else: 
-                bottom = zero_mat 
+                bottom = zero_mat  """
             #bottom = one_mat
-            #bottom = top
-        # Generate the last column as zero or one with probability 1/2
-        prob = torch.tensor([0.5])
-        # Draw a sample from the Bernoulli distribution
-        sample = torch.bernoulli(prob)
-        if sample == 1:
-            query = zero_one[:,1].view(num_tokens,1)
-        else: 
-            query = zero_one[:,0].view(num_tokens,1)
-        
-        #choose query to be standard normal
-        query = torch.randn(num_tokens,1)
+            #bottom = zero_mat
+            #bottom = one_zero
+            bottom = top
+            # Generate the last column as zero or one with probability 1/2
+            prob = torch.tensor([0.5])
+            # Draw a sample from the Bernoulli distribution
+            sample = torch.bernoulli(prob)
+            if sample == 1:
+                query = zero_one[:,1].view(num_tokens,1)
+            else: 
+                query = zero_one[:,0].view(num_tokens,1)
 
         shape = (num_tokens,1)
         # Fill the rest of the last column with zeros
@@ -225,7 +231,7 @@ optimizer = optim.Adam([W], lr=0.01)
 loss_fn = torch.nn.MSELoss()
 
 # Training loop
-num_epochs = 80
+num_epochs = 50
 poly_data = []
 batch_size = 32  # Define the batch size
 
@@ -268,8 +274,8 @@ for epoch in range(num_epochs):
 target_regressor = fold_params(true_P,true_Q)
 print('ground truth coefficients: ', target_regressor)
 print('learned regressor: ', W)
-l1error = torch.dist(target_regressor, W,p=1)
-print('l1 error: ', l1error)
+l2error = torch.dist(target_regressor, W,p=2)
+print('l2 error: ', l2error)
 
 # Flatten the W tensor to get a 1D array of its entries
 W_flat = W.flatten().detach().numpy()
@@ -279,7 +285,7 @@ plt.figure(figsize=(10, 6))
 plt.bar(range(len(W_flat)), W_flat)
 plt.xlabel('Index')
 plt.ylabel('Value')
-plt.title('Bar Plot of Each Coefficient')
+plt.title('Bar Plot of Each Coefficient of Regressor For Fixed Transition')
 plt.show()
 
 #check if inner product of target_regressor and fold_feature(Z,b)
