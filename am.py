@@ -13,9 +13,10 @@ torch.manual_seed(44)
 
 # Create the fixed matrices P and Q with i.i.d standard normal entries
 
-d = 8 #dimension of model d by d 
+d = 6 #dimension of model d by d 
 n = int(d/2) + 1 #number of tokens 
 num_tokens = int(d/2) 
+feature_length = int(d*d*(d-1)/2)
 
 # Create the identity and zero matrices once
 I = torch.eye(num_tokens)
@@ -62,7 +63,7 @@ for _ in range(num_samples):
         Z = 2 * torch.randint(0, 2, (d, n), dtype=torch.float) - 1
     if mode == 'unitary':
         def random_unitary_matrix(size):
-            q, _ = torch.qr(torch.randn(size, size))
+            q, _ = torch.linalg.qr(torch.randn(size, size))
             return q
 
         # Generate the top and bottom parts as random unitary matrices
@@ -180,7 +181,8 @@ def fold_feature(Z,b):
     d, n = Z.shape
     #{j k} {l} distinct choices for j not equal to k is d choose 2 times d.  
     #number of choices for j = k is d 
-    v = torch.zeros(int(d*d*(d-1)/2 + d))
+    #v = torch.zeros(int(d*d*(d-1)/2 + d))
+    v = torch.zeros(feature_length)
     index = 0
     for j in range(d):
         for k in range(j+1, d):
@@ -188,34 +190,37 @@ def fold_feature(Z,b):
                 v[index] = torch.inner(Z[j], Z[k])*Z[l,b]
                 index += 1
             
-    for l in range(d):
-        v[index] = n*Z[l,b]
-        index += 1
+    #for l in range(d):
+    #    v[index] = n *Z[l,b]
+    #    index += 1
     
     return v
 
 #folds the parameters of P,Q into format given by fold_feature
 def fold_params(P,Q): 
     d = P.shape[0]
-    par = int(d*d*(d-1)/2 + d)
-    W = torch.zeros(par)
+    #par = int(d*d*(d-1)/2 + d)
+    #par = int(d*d*(d-1)/2)
+    W = torch.zeros(feature_length)
     index = 0
     for j in range(d):
         for k in range(j+1, d):
             for l in range(d):
                 W[index] = P[a,j]*Q[k,l] + P[a,k]*Q[j,l]
                 index += 1
-    for l in range(d):
-        for j in range(d): 
-            W[index] += P[a,j]*Q[j,l]
-        index += 1
+    #for l in range(d):
+    #    for j in range(d): 
+    #        W[index] += P[a,j]*Q[j,l]
+    #    index += 1
+    
     return W
 
 
 # Initialize trainable parameters P and Q
 #d^3 for a'th entry of P, recall only regressing (a,b) coordinate
-par = int(d*d*(d-1)/2 + d)
-W = torch.randn(par, requires_grad=True)
+#par = int(d*d*(d-1)/2 + d)
+#par = int(d*d*(d-1)/2)
+W = torch.randn(feature_length, requires_grad=True)
 
 # Define the optimizer
 optimizer = optim.Adam([W], lr=0.01)

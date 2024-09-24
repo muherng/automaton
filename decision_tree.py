@@ -4,8 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 mode = 'unitary'
-#style = 'unique'
-style = 'degenerate'
+style = 'unique'
+#style = 'degenerate'
 
 
 # Set random seed for reproducibility (optional)
@@ -13,7 +13,7 @@ torch.manual_seed(47)
 
 # Create the fixed matrices P and Q with i.i.d standard normal entries
 
-d = 4 #dimension of model d by d 
+d = 8 #dimension of model d by d 
 n = int(d/2) + 1 #number of tokens 
 num_tokens = int(d/2) 
 
@@ -79,18 +79,30 @@ for _ in range(num_samples):
     if mode == 'unitary':
         # Generate the top and bottom parts as random unitary matrices
         if style == 'unique': 
-            top = zero_one
-            prob = torch.tensor([0.5, 0.5])
-            sample = torch.bernoulli(prob)
+            #top = zero_one
+            #prob = torch.tensor([0.5, 0.5])
+            #sample = torch.bernoulli(prob)
             #print('sample: ', sample)
-            first = zero_one[:,int(sample[0])].view(num_tokens,1)
-            second = zero_one[:,int(sample[1])].view(num_tokens,1)
-            bottom = torch.cat((first,second), dim=1)  
+            #first = zero_one[:,int(sample[0])].view(num_tokens,1)
+            #second = zero_one[:,int(sample[1])].view(num_tokens,1)
+            #bottom = torch.cat((first,second), dim=1)  
             #print('bottom: ', bottom)
-            #top = torch.randn((num_tokens,num_tokens))
-            #bottom = torch.randn((num_tokens,num_tokens))
+            top = torch.randn((num_tokens,num_tokens))
+            bottom = torch.randn((num_tokens,num_tokens))
+            
+            # Normalize columns of top
+            top_norms = torch.norm(top, dim=0, keepdim=True)
+            top = top / top_norms
+
+            # Normalize columns of bottom
+            bottom_norms = torch.norm(bottom, dim=0, keepdim=True)
+            bottom = bottom / bottom_norms
+
             #choose query to be standard normal
-            query = torch.randn(num_tokens,1)
+            #query = torch.randn(num_tokens,1)
+            #pick a random column from top
+            q = torch.randint(0,num_tokens,(1,))
+            query = top[:,q].view(num_tokens,1)
         if style == 'degenerate':
             top = zero_one
             # Define the probability tensor with probability 1/2
@@ -119,7 +131,8 @@ for _ in range(num_samples):
         # Fill the rest of the last column with zeros
         filler = torch.randn(shape)*1.0
         last_column = torch.cat((query,filler), dim=0).view(-1,1)
-
+        print('top: ' , top)
+        print('bottom: ', bottom)
         # Concatenate the top and bottom parts with the last column
         Z = torch.cat((torch.cat((top, bottom), dim=0), last_column), dim=1)
     
