@@ -49,7 +49,7 @@ def main():
         return result
 
     # Number of random choices of Z
-    num_samples = 2**12
+    num_samples = 2**14
 
     # Initialize lists to store input Z's and results
     Z_list = []
@@ -71,12 +71,6 @@ def main():
     #takeaways: if you can imagine a "DLA program" that generates the data,
     #that is not the generating program, then the estimator is degenerate
     for _ in range(num_samples):
-        zero_one = random_unitary_matrix(num_tokens)
-        zero = zero_one[:,0].view(num_tokens,1)
-        one = zero_one[:,1].view(num_tokens,1)
-        zero_mat = torch.cat((zero, zero), dim=1) 
-        one_mat = torch.cat((one, one), dim=1)
-        one_zero = torch.cat((one, zero), dim=1)
         if mode == 'unitary':
             # Generate the top and bottom parts as random unitary matrices
             if style == 'unique': 
@@ -146,10 +140,9 @@ def main():
     #argument b is the column 
     #feature does not change with a (the row of P_{a:})
     #A new feature function for the folded regression problem that guarantees uniqueness
+   
     def fold_feature(Z,b):
         """
-        Computes the vector v from the matrix Z as described.
-
         Parameters:
         Z (torch.Tensor): A tensor of shape (d, n)
 
@@ -157,20 +150,24 @@ def main():
         torch.Tensor: A tensor v of shape (d^3,)
         """
         d, n = Z.shape
-        #{j k} {l} distinct choices for j not equal to k is d choose 2 times d.  
-        #number of choices for j = k is d 
+        # {j k} {l} distinct choices for j not equal to k is d choose 2 times d.  
+        # number of choices for j = k is d 
         v = torch.zeros(int(d*d*(d-1)/2) + d**2)
-        index = 0
+        
+        # Vectorized computation for j != k
+        idx = 0
         for j in range(d):
             for k in range(j+1, d):
-                for l in range(d):
-                    v[index] = torch.inner(Z[j], Z[k])*Z[l,b]
-                    index += 1
+                inner_product = torch.inner(Z[j], Z[k])
+                v[idx:idx+d] = inner_product * Z[:, b]
+                idx += d
         
+        # Vectorized computation for j == j
         for j in range(d):
-            for l in range(d):
-                v[index] = torch.inner(Z[j], Z[j])*Z[l,b]
-                index += 1
+            inner_product = torch.inner(Z[j], Z[j])
+            v[idx:idx+d] = inner_product * Z[:, b]
+            idx += d
+        
         return v
 
     #folds the parameters of P,Q into format given by fold_feature
@@ -232,7 +229,7 @@ def main():
     loss_fn = torch.nn.MSELoss()
 
     # Training loop
-    num_epochs = 2
+    num_epochs = 300
     poly_data = []
     batch_size = 32  # Define the batch size
 
@@ -248,7 +245,8 @@ def main():
             end_idx = min(start_idx + batch_size, num_samples)
 
             # Get the batch data
-            batch_covariances = torch.stack([fold_feature(Z_tensor[i], b) for i in range(start_idx, end_idx)])
+            #batch_covariances = torch.stack([fold_feature(Z_tensor[i], b) for i in range(start_idx, end_idx)])
+            batch_covariances = features[start_idx:end_idx]
             batch_results = results_tensor[start_idx:end_idx]
 
             # Zero the gradients
@@ -309,16 +307,16 @@ def main():
         print('true label: ', results_tensor[i])
 
 if __name__ == "__main__":
-    pr = cProfile.Profile()
-    pr.enable()
+    #pr = cProfile.Profile()
+    #pr.enable()
     
     main()
     
-    pr.disable()
+"""     pr.disable()
     s = io.StringIO()
     sortby = 'cumulative'
     ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
     ps.print_stats(100)  # Print the top 100 functions
-    print(s.getvalue())
+    print(s.getvalue()) """
 
 
