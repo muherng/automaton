@@ -4,8 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 mode = 'unitary'
-#style = 'unique'
-style = 'degenerate'
+style = 'unique'
+#style = 'degenerate'
 
 
 # Set random seed for reproducibility (optional)
@@ -13,7 +13,7 @@ torch.manual_seed(44)
 
 # Create the fixed matrices P and Q with i.i.d standard normal entries
 
-d = 4 #dimension of model d by d 
+d = 8 #dimension of model d by d 
 n = int(d/2) + 1 #number of tokens 
 num_tokens = int(d/2) 
 
@@ -78,8 +78,6 @@ for _ in range(num_samples):
 
         # Concatenate the top and bottom parts with the last column
         Z = torch.cat((torch.cat((top, bottom), dim=0), last_column), dim=1)
-    
-    print('Z: ', Z)
     
     # Compute PZ(Z^TQZ) with true parameters
     result = compute_expression(true_P, true_Q, Z)
