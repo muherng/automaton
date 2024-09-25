@@ -241,7 +241,7 @@ def main():
     # Training loop
     num_epochs = 300
     poly_data = []
-    batch_size = 128  # Define the batch size
+    batch_size = 256  # Define the batch size
 
     features = torch.stack([fold_feature(Z_tensor[i], b) for i in range(num_samples)])
 
