@@ -56,12 +56,12 @@ def main():
     results = []
 
     # Define the coordinate to fit (a, b)
-    a, b = int(d/2), n-1  # Example: coordinate (3,3)
+    a, b = int(d/2) + 1, n-1  # Example: coordinate (3,3)
     print('a: ', a)
     print('b: ', b)
-    def random_unitary_matrix(size):
-        q, _ = torch.qr(torch.randn(size, size))
-        return q
+    #def random_unitary_matrix(size):
+    #    q, _ = torch.qr(torch.randn(size, size))
+    #    return q
     #generate synthetic outputs
     #regenerating the unitary matrix for every sample 
     #is critical for uniqueness of the regressor
@@ -128,6 +128,7 @@ def main():
         #print('result: ', result)
         #print('result total: ', result[a:a+2,b])
         results.append(result[a, b])
+        #results.append(result[a:,b])
         #raise ValueError('stop here')
 
     # Convert lists to tensors
@@ -214,13 +215,11 @@ def main():
     max_eigenvalue, min_eigenvalue, max_eigenvector, min_eigenvector = compute_max_min_eigen(Z_tensor, b, num_samples)
     print("Max eigenvalue:", max_eigenvalue)
     print("Min eigenvalue:", min_eigenvalue)
-    print("Max eigenvector:", max_eigenvector)
-    print("Min eigenvector:", min_eigenvector)
 
     # Initialize trainable parameters P and Q
     #d^3 for a'th entry of P, recall only regressing (a,b) coordinate
-    par = int(d*d*(d-1)/2 + d**2)
-    W = torch.randn(par, requires_grad=True)
+    feature_length = int(d*d*(d-1)/2 + d**2)
+    W = torch.randn(feature_length, requires_grad=True)
 
     # Define the optimizer
     optimizer = optim.Adam([W], lr=0.01)
@@ -275,7 +274,7 @@ def main():
     target_regressor = fold_params(true_P,true_Q)
     print('ground truth coefficients: ', target_regressor)
     print('learned regressor: ', W)
-    l2error = torch.dist(target_regressor, W,p=2)
+    l2error = torch.dist(target_regressor,W,p=2)
     print('l2 error: ', l2error)
 
     # Flatten the W tensor to get a 1D array of its entries
