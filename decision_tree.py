@@ -51,14 +51,16 @@ def main():
     # Number of random choices of Z
     num_samples = 2**14
 
-    # Initialize lists to store input Z's and results
-    Z_list = []
-    results = []
 
     # Define the coordinate to fit (a, b)
-    a, b = int(d/2) + 1, n-1  # Example: coordinate (3,3)
+    a, b = int(d/2), n-1  # Example: coordinate (3,3)
+    k = d - a #dimension of prediction
     print('a: ', a)
     print('b: ', b)
+
+    # Initialize lists to store input Z's and results
+    Z_list = []
+    results = torch.zeros((k,num_samples))
     #def random_unitary_matrix(size):
     #    q, _ = torch.qr(torch.randn(size, size))
     #    return q
@@ -70,7 +72,7 @@ def main():
     #Brutal Truth: if query is selected from the unitary matrix, the regressor is always degenerate
     #takeaways: if you can imagine a "DLA program" that generates the data,
     #that is not the generating program, then the estimator is degenerate
-    for _ in range(num_samples):
+    for id in range(num_samples):
         if mode == 'unitary':
             # Generate the top and bottom parts as random unitary matrices
             if style == 'unique': 
@@ -127,13 +129,13 @@ def main():
         Z_list.append(Z)
         #print('result: ', result)
         #print('result total: ', result[a:a+2,b])
-        results.append(result[a, b])
-        #results.append(result[a:,b])
-        #raise ValueError('stop here')
+        #results.append(result[a, b])
+        results[:,id] = result[a:,b]
+        id += 1
 
     # Convert lists to tensors
     Z_tensor = torch.stack(Z_list)
-    results_tensor = torch.tensor(results)  
+    results_tensor = results  
     print('results_tensor: ', results_tensor)
 
     #Creates H matrix dependent on Z and the b coordinate of (a,b) 
@@ -219,8 +221,10 @@ def main():
     # Initialize trainable parameters P and Q
     #d^3 for a'th entry of P, recall only regressing (a,b) coordinate
     feature_length = int(d*d*(d-1)/2 + d**2)
-    W = torch.randn(feature_length, requires_grad=True)
-
+    #W = torch.randn(feature_length, requires_grad=True)
+    #k is dimension of prediction
+    k = d - a
+    W = torch.randn((k,feature_length), requires_grad=True)
     # Define the optimizer
     optimizer = optim.Adam([W], lr=0.01)
 
@@ -245,15 +249,15 @@ def main():
 
             # Get the batch data
             #batch_covariances = torch.stack([fold_feature(Z_tensor[i], b) for i in range(start_idx, end_idx)])
-            batch_covariances = features[start_idx:end_idx]
-            batch_results = results_tensor[start_idx:end_idx]
+            batch_covariances = torch.transpose(features[start_idx:end_idx,:], 0,1)
+            batch_results = results_tensor[:,start_idx:end_idx]
 
             # Zero the gradients
             optimizer.zero_grad()
 
             # Forward pass for the batch
-            batch_outputs = torch.matmul(batch_covariances, W)
-
+            batch_outputs = torch.matmul(W, batch_covariances)
+            #raise ValueError('stop')
             # Compute loss for the batch
             loss = loss_fn(batch_outputs, batch_results)
 
@@ -274,6 +278,7 @@ def main():
     target_regressor = fold_params(true_P,true_Q)
     print('ground truth coefficients: ', target_regressor)
     print('learned regressor: ', W)
+    print('W shape: ', W.shape)
     l2error = torch.dist(target_regressor,W,p=2)
     print('l2 error: ', l2error)
 
