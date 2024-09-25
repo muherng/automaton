@@ -138,7 +138,7 @@ def main():
     results_tensor = results  
     print('results_tensor: ', results_tensor)
 
-    #Creates H matrix dependent on Z and the b coordinate of (a,b) 
+        #Creates H matrix dependent on Z and the b coordinate of (a,b) 
     #arguments Z is data matrix
     #argument b is the column 
     #feature does not change with a (the row of P_{a:})
@@ -197,13 +197,15 @@ def main():
                 index += 1
         return W_row
 
+    features = torch.stack([fold_feature(Z_tensor[i], b) for i in range(num_samples)])
 
-    def compute_max_min_eigen(Z_tensor, b, num_samples):
+
+    def compute_max_min_eigen(features, b, num_samples):
         # Compute the vectors
-        vectors = torch.stack([fold_feature(Z_tensor[i], b) for i in range(num_samples)])
+        #vectors = torch.stack([fold_feature(Z_tensor[i], b) for i in range(num_samples)])
         
         # Compute the covariance matrix using torch.cov
-        covariance_matrix = torch.cov(vectors.T)
+        covariance_matrix = torch.cov(features.T)
 
         print('cov shape: ', covariance_matrix.shape)
         
@@ -221,7 +223,7 @@ def main():
         return max_eigenvalue.item(), min_eigenvalue.item(), max_eigenvector, min_eigenvector
 
     # Example usage
-    max_eigenvalue, min_eigenvalue, max_eigenvector, min_eigenvector = compute_max_min_eigen(Z_tensor, b, num_samples)
+    max_eigenvalue, min_eigenvalue, max_eigenvector, min_eigenvector = compute_max_min_eigen(features, b, num_samples)
     print("Max eigenvalue:", max_eigenvalue)
     print("Min eigenvalue:", min_eigenvalue)
 
@@ -243,7 +245,6 @@ def main():
     poly_data = []
     batch_size = 256  # Define the batch size
 
-    features = torch.stack([fold_feature(Z_tensor[i], b) for i in range(num_samples)])
 
     # Training loop
     for epoch in range(num_epochs):
@@ -286,7 +287,7 @@ def main():
     print('ground truth coefficients: ', target_regressor)
     print('learned regressor: ', W)
     print('W shape: ', W.shape)
-    l2error = torch.dist(target_regressor,W,p=2)
+    l2error = torch.dist(target_regressor,W,p=2)/(W.shape[0]*W.shape[1])
     print('l2 error: ', l2error)
 
     # Flatten the W tensor to get a 1D array of its entries
@@ -323,7 +324,7 @@ if __name__ == "__main__":
     
     main()
     
-"""     pr.disable()
+   """  pr.disable()
     s = io.StringIO()
     sortby = 'cumulative'
     ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
