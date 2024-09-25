@@ -49,7 +49,7 @@ def main():
         return result
 
     # Number of random choices of Z
-    num_samples = 2**14
+    num_samples = 2**16
 
 
     # Define the coordinate to fit (a, b)
@@ -161,13 +161,13 @@ def main():
         idx = 0
         for j in range(d):
             for k in range(j+1, d):
-                inner_product = torch.inner(Z[j], Z[k])
+                inner_product = d**(-0.5)*torch.inner(Z[j], Z[k])
                 v[idx:idx+d] = inner_product * Z[:, b]
                 idx += d
         
         # Vectorized computation for j == j
         for j in range(d):
-            inner_product = torch.inner(Z[j], Z[j])
+            inner_product = d**(-0.5)*torch.inner(Z[j], Z[j])
             v[idx:idx+d] = inner_product * Z[:, b]
             idx += d
         
@@ -241,7 +241,7 @@ def main():
     # Training loop
     num_epochs = 300
     poly_data = []
-    batch_size = 32  # Define the batch size
+    batch_size = 128  # Define the batch size
 
     features = torch.stack([fold_feature(Z_tensor[i], b) for i in range(num_samples)])
 
@@ -279,7 +279,7 @@ def main():
 
         # Print average loss for each epoch
         if (epoch + 1) % 1 == 0:
-            print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss:.4f}')
+            print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss/batch_size:.4f}')
             poly_data = poly_data + [epoch_loss]
 
     target_regressor = fold_params(true_P,true_Q)
