@@ -177,18 +177,25 @@ def main():
     def fold_params(P,Q): 
         d = P.shape[0]
         par = int(d*d*(d-1)/2 + d**2)
-        W = torch.zeros(par)
+        W = torch.zeros((k,par))
+        for row in range(k): 
+            W[row] = fold_params_helper(P,Q,row)
+        return W
+
+    def fold_params_helper(P,Q,row):
         index = 0
+        par = int(d*d*(d-1)/2 + d**2)
+        W_row = torch.zeros(par)
         for j in range(d):
             for k in range(j+1, d):
                 for l in range(d):
-                    W[index] = P[a,j]*Q[k,l] + P[a,k]*Q[j,l]
+                    W_row[index] = P[row,j]*Q[k,l] + P[row,k]*Q[j,l]
                     index += 1
         for j in range(d):
             for l in range(d):
-                W[index] = P[a,j]*Q[j,l]
+                W_row[index] = P[row,j]*Q[j,l]
                 index += 1
-        return W
+        return W_row
 
 
     def compute_max_min_eigen(Z_tensor, b, num_samples):
