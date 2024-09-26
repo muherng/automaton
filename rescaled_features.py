@@ -8,18 +8,20 @@ import cProfile
 
 
 def main(): 
-    mode = 'unitary'
+    mode = 'mixed' # a mixture of random and unitary data
+    #mode = 'random'
+    #mode = 'unitary'
     style = 'unique'
     #style = 'degenerate'
-    #style = 'mixed'
-    #feature_mode = 'full'
-    feature_mode = 'compressed'
+    feature_mode = 'full'
+    #feature_mode = 'compressed'
+    mixture_prob = 0.999
     # Set random seed for reproducibility (optional)
     torch.manual_seed(47)
 
     # Create the fixed matrices P and Q with i.i.d standard normal entries
 
-    d = 4 #dimension of model d by d 
+    d = 8 #dimension of model d by d 
     n = int(d/2) + 1 #number of tokens 
     num_tokens = int(d/2) 
 
@@ -58,8 +60,8 @@ def main():
     num_samples = 2**14
 
 
-    # Define the coordinate to fit (a, b)
-    a, b = int(d/2), n-1  # Example: coordinate (3,3)
+    # Define the coordinates to fit (a, b) to (d-1,b) which we write as range(a,d) x {b}
+    a, b = int(d/2), n-1  
     k = d - a #dimension of prediction
     print('a: ', a)
     print('b: ', b)
@@ -67,24 +69,34 @@ def main():
     # Initialize lists to store input Z's and results
     Z_list = []
     results = torch.zeros((k,num_samples))
-    #def random_unitary_matrix(size):
-    #    q, _ = torch.qr(torch.randn(size, size))
-    #    return q
-    #generate synthetic outputs
-    #regenerating the unitary matrix for every sample 
-    #is critical for uniqueness of the regressor
-    #both unique and degnerate styles work
-    #when unitary matrix is fixed, the regressor is not unique
-    #Brutal Truth: if query is selected from the unitary matrix, the regressor is always degenerate
-    #takeaways: if you can imagine a "DLA program" that generates the data,
-    #that is not the generating program, then the estimator is degenerate
+    def random_unitary_matrix(size):
+        q, _ = torch.qr(torch.randn(size, size))
+        return q
+   
     for id in range(num_samples):
+        if mode == 'random':
+            # Generate the top and bottom parts as random unitary matrices
+            top = torch.randn((num_tokens,num_tokens))
+            bottom = torch.randn((num_tokens,num_tokens))
+            
+            # Normalize columns of top
+            top_norms = torch.norm(top, dim=0, keepdim=True)
+            top = top / top_norms
+
+            # Normalize columns of bottom
+            bottom_norms = torch.norm(bottom, dim=0, keepdim=True)
+            bottom = bottom / bottom_norms
         if mode == 'unitary':
             # Generate the top and bottom parts as random unitary matrices
-            if style == 'unique': 
+            top = random_unitary_matrix(num_tokens)
+            bottom = random_unitary_matrix(num_tokens)
+        if mode == 'mixed': 
+            if torch.rand(1) < mixture_prob:
+                top = random_unitary_matrix(num_tokens)
+                bottom = random_unitary_matrix(num_tokens)
+            else:
                 top = torch.randn((num_tokens,num_tokens))
                 bottom = torch.randn((num_tokens,num_tokens))
-                
                 # Normalize columns of top
                 top_norms = torch.norm(top, dim=0, keepdim=True)
                 top = top / top_norms
@@ -92,34 +104,19 @@ def main():
                 # Normalize columns of bottom
                 bottom_norms = torch.norm(bottom, dim=0, keepdim=True)
                 bottom = bottom / bottom_norms
-            if style == 'degenerate':
-                top = torch.randn((num_tokens,num_tokens)) 
-                bottom = top
-            if style == 'mixed':
-                top = torch.randn((num_tokens,num_tokens))
-                bottom = torch.randn((num_tokens,num_tokens))
-                
-                # Normalize columns of top
-                top_norms = torch.norm(top, dim=0, keepdim=True)
-                top = top / top_norms
-
-                # Normalize columns of bottom
-                bottom_norms = torch.norm(bottom, dim=0, keepdim=True)
-                bottom = bottom / bottom_norms
-
-            #choose query to be standard normal
-            #query = torch.randn(num_tokens,1)
-            #pick a random column from top
-            q = torch.randint(0,num_tokens,(1,))
-            query = top[:,q].view(num_tokens,1)
-            shape = (num_tokens,1)
-            # Fill the rest of the last column with zeros
-            filler = torch.randn(shape)*1.0
-            last_column = torch.cat((query,filler), dim=0).view(-1,1)
-            # Concatenate the top and bottom parts with the last column
-            Z = torch.cat((torch.cat((top, bottom), dim=0), last_column), dim=1)
-    
         
+        if style == 'degenerate':
+            bottom = top
+        #pick a random column from top
+        q = torch.randint(0,num_tokens,(1,))
+        query = top[:,q].view(num_tokens,1)
+        shape = (num_tokens,1)
+        # Fill the rest of the last column with zeros
+        filler = torch.randn(shape)*1.0
+        last_column = torch.cat((query,filler), dim=0).view(-1,1)
+        # Concatenate the top and bottom parts with the last column
+        Z = torch.cat((torch.cat((top, bottom), dim=0), last_column), dim=1)
+    
         # Compute PZ(Z^TQZ) with true parameters
         result = compute_expression(true_P, true_Q, Z)
         
@@ -159,14 +156,16 @@ def main():
         idx = 0
         for j in range(d):
             for k in range(j+1, d):
-                inner_product = d**(-0.5)*torch.inner(Z[j], Z[k])
+                #inner_product = d**(-0.5)*torch.inner(Z[j], Z[k])
+                inner_product = torch.inner(Z[j], Z[k])
                 v[idx:idx+d] = inner_product * Z[:, b]
                 idx += d
         
         if feature_mode == 'full':
             # Vectorized computation for j == j
             for j in range(d):
-                inner_product = d**(-0.5)*torch.inner(Z[j], Z[j])
+                #inner_product = d**(-0.5)*torch.inner(Z[j], Z[j])
+                inner_product = torch.inner(Z[j], Z[j])
                 v[idx:idx+d] = inner_product * Z[:, b]
                 idx += d
         
@@ -174,10 +173,13 @@ def main():
 
     #folds the parameters of P,Q into format given by fold_feature
     def fold_params(P,Q): 
+        #print('P', P)
+        #print('Q', Q)
         d = P.shape[0]
+        #print('k: ', k)
         W = torch.zeros((k,feature_length))
         for row in range(k): 
-            W[row] = fold_params_helper(P,Q,row)
+            W[row,:] = fold_params_helper(P,Q,a+row)
         return W
 
     def fold_params_helper(P,Q,row):
@@ -187,6 +189,9 @@ def main():
             for k in range(j+1, d):
                 for l in range(d):
                     W_row[index] = P[row,j]*Q[k,l] + P[row,k]*Q[j,l]
+                    #print('P[row,k]: ', P[row,k])
+                    #print('Q[j,l]: ', Q[j,l])
+                    #print('W_row[index]: ', W_row[index])
                     index += 1
         if feature_mode == 'full': 
             for j in range(d):
@@ -281,11 +286,16 @@ def main():
             poly_data = poly_data + [epoch_loss]
 
     target_regressor = fold_params(true_P,true_Q)
-    print('ground truth coefficients: ', target_regressor)
-    print('learned regressor: ', W)
-    print('W shape: ', W.shape)
-    l2error = torch.dist(target_regressor,W,p=2)/(W.shape[0]*W.shape[1])
+    #print('ground truth coefficients: ', target_regressor)
+    #print('learned regressor: ', W)
+    #print('W shape: ', W.shape)
+    #l2error = torch.dist(target_regressor,W,p=2)/(W.shape[0]*W.shape[1])
+    #print('target regressor shape: ', target_regressor.shape)
+    l2error = torch.dist(target_regressor,W,p=2)
     print('l2 error: ', l2error)
+
+    # Output coordinates where target_regressor and W differ by more than 0.1
+
 
     # Flatten the W tensor to get a 1D array of its entries
     W_flat = W.flatten().detach().numpy()
@@ -302,7 +312,7 @@ def main():
     #is equal to the target value 
     def debug(target_regressor, Z, b):
         cov = fold_feature(Z,b)
-        print('inner product: ', torch.inner(target_regressor, cov))
+        #print('inner product: ', torch.inner(target_regressor, cov))
         #print('target value: ', results_tensor[0])
 
     #loop over results_tensor and check if debug function works 
@@ -311,9 +321,9 @@ def main():
         cov = fold_feature(Z,b)
         #print('iteration: ', i)
         #print('cov: ', cov)
-        print('learned label: ', torch.inner(W, cov))
-        print('debug label: ', torch.inner(target_regressor, cov))
-        print('true label: ', results_tensor[i])
+        #print('learned label: ', torch.inner(W, cov))
+        #print('debug label: ', torch.inner(target_regressor, cov))
+        #print('true label: ', results_tensor[i])
 
 if __name__ == "__main__":
     #pr = cProfile.Profile()
