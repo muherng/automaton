@@ -27,7 +27,7 @@ def fold_feature(Z,**kwargs):
             feature_length = value
         elif key == 'b':
             b = value
-            
+
     d, n = Z.shape
     # {j k} {l} distinct choices for j not equal to k is d choose 2 times d.  
     # number of choices for j = k is d 
@@ -53,23 +53,29 @@ def fold_feature(Z,**kwargs):
     return v
 
  #folds the parameters of P,Q into format given by fold_feature
-def fold_params(P,Q): 
+def fold_params(P,Q,**kwargs): 
+    for key,value in kwargs.items():
+        if key == 'feature_length':
+            feature_length = value
+        elif key == 'feature_mode':
+            feature_mode = value
+        elif key == 'a':
+            a = value
+        elif key == 'k':
+            k = value
     d = P.shape[0]
     W = torch.zeros((k,feature_length))
     for row in range(k): 
-        W[row,:] = fold_params_helper(P,Q,a+row)
+        W[row,:] = fold_params_helper(P,Q,a+row,d,feature_length,feature_mode)
     return W
 
-def fold_params_helper(P,Q,row):
+def fold_params_helper(P,Q,row,d,feature_length,feature_mode):
     index = 0
     W_row = torch.zeros(feature_length)
     for j in range(d):
         for k in range(j+1, d):
             for l in range(d):
                 W_row[index] = P[row,j]*Q[k,l] + P[row,k]*Q[j,l]
-                #print('P[row,k]: ', P[row,k])
-                #print('Q[j,l]: ', Q[j,l])
-                #print('W_row[index]: ', W_row[index])
                 index += 1
     if feature_mode == 'full': 
         for j in range(d):
@@ -78,3 +84,29 @@ def fold_params_helper(P,Q,row):
                 index += 1
     return W_row
 
+def compute_max_min_eigen(features, num_samples):
+    
+    # Compute the covariance matrix using torch.cov
+    covariance_matrix = torch.cov(features.T)
+
+    print('cov shape: ', covariance_matrix.shape)
+    
+    # Compute eigenvalues and eigenvectors using torch.linalg.eigh
+    eigenvalues, eigenvectors = torch.linalg.eigh(covariance_matrix)
+    print('eigenvalues: ', eigenvalues)
+    
+    # Find the maximum and minimum eigenvalues and their corresponding eigenvectors
+    max_eigenvalue, max_index = torch.max(eigenvalues, 0)
+    min_eigenvalue, min_index = torch.min(eigenvalues, 0)
+    
+    max_eigenvector = eigenvectors[:, max_index]
+    min_eigenvector = eigenvectors[:, min_index]
+    
+    return max_eigenvalue.item(), min_eigenvalue.item(), max_eigenvector, min_eigenvector
+
+#check if inner product of target_regressor and fold_feature(Z,b)
+#is equal to the target value 
+def debug(target_regressor, Z, b, results_tensor):
+    cov = fold_feature(Z,b)
+    print('inner product: ', torch.inner(target_regressor, cov))
+    print('target value: ', results_tensor[0])

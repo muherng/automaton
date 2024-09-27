@@ -6,14 +6,13 @@ import pstats
 import io
 import cProfile
 
-from certificate_helper import compute_expression, fold_feature, fold_params
-
+from certificate_helper import compute_expression, fold_feature, fold_params, compute_max_min_eigen
 
 def main(): 
     mode = 'mixed' # a mixture of random and unitary data
     style = 'unique'
     feature_mode = 'full'
-    mixture_prob = 0.999
+    mixture_prob = 0.9
     # Number of random choices of Z
     num_samples = 2**14
     # Set random seed for reproducibility (optional)
@@ -125,30 +124,8 @@ def main():
     args = {'feature_mode': feature_mode, 'feature_length': feature_length,'b': b}    
     features = torch.stack([fold_feature(Z_tensor[i],**args) for i in range(num_samples)])
 
-
-    def compute_max_min_eigen(features, b, num_samples):
-        
-        # Compute the covariance matrix using torch.cov
-        covariance_matrix = torch.cov(features.T)
-
-        print('cov shape: ', covariance_matrix.shape)
-        
-        # Compute eigenvalues and eigenvectors using torch.linalg.eigh
-        eigenvalues, eigenvectors = torch.linalg.eigh(covariance_matrix)
-        print('eigenvalues: ', eigenvalues)
-        
-        # Find the maximum and minimum eigenvalues and their corresponding eigenvectors
-        max_eigenvalue, max_index = torch.max(eigenvalues, 0)
-        min_eigenvalue, min_index = torch.min(eigenvalues, 0)
-        
-        max_eigenvector = eigenvectors[:, max_index]
-        min_eigenvector = eigenvectors[:, min_index]
-        
-        return max_eigenvalue.item(), min_eigenvalue.item(), max_eigenvector, min_eigenvector
-
     # Example usage
-    max_eigenvalue, min_eigenvalue, max_eigenvector, min_eigenvector = compute_max_min_eigen(features, b, num_samples)
-    print("Max eigenvalue:", max_eigenvalue)
+    max_eigenvalue, min_eigenvalue, max_eigenvector, min_eigenvector = compute_max_min_eigen(features, num_samples)
     print("Min eigenvalue:", min_eigenvalue)
 
     # Initialize trainable parameters P and Q
@@ -167,7 +144,6 @@ def main():
     num_epochs = 300
     poly_data = []
     batch_size = 256  # Define the batch size
-
 
     # Training loop
     for epoch in range(num_epochs):
@@ -206,13 +182,14 @@ def main():
             print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss/batch_size:.4f}')
             poly_data = poly_data + [epoch_loss]
 
-    target_regressor = fold_params(true_P,true_Q)
+    args = {'feature_mode': feature_mode, 'feature_length': feature_length,'a': a,'b': b, 'k': k}
+    target_regressor = fold_params(true_P,true_Q,**args)
     #print('ground truth coefficients: ', target_regressor)
     #print('learned regressor: ', W)
     #print('W shape: ', W.shape)
     #l2error = torch.dist(target_regressor,W,p=2)/(W.shape[0]*W.shape[1])
     #print('target regressor shape: ', target_regressor.shape)
-    l2error = torch.dist(target_regressor,W,p=2)
+    l2error = torch.dist(target_regressor,W,p=2)/(W.shape[0]*W.shape[1])
     print('l2 error: ', l2error)
 
     # Output coordinates where target_regressor and W differ by more than 0.1
@@ -229,35 +206,8 @@ def main():
     plt.title('Bar Plot of Each Coefficient of Regressor For Fixed Transition')
     plt.show()
 
-    #check if inner product of target_regressor and fold_feature(Z,b)
-    #is equal to the target value 
-    def debug(target_regressor, Z, b):
-        cov = fold_feature(Z,b)
-        #print('inner product: ', torch.inner(target_regressor, cov))
-        #print('target value: ', results_tensor[0])
-
-    #loop over results_tensor and check if debug function works 
-    for i in range(1):
-        Z = Z_tensor[i]
-        cov = fold_feature(Z,b)
-        #print('iteration: ', i)
-        #print('cov: ', cov)
-        #print('learned label: ', torch.inner(W, cov))
-        #print('debug label: ', torch.inner(target_regressor, cov))
-        #print('true label: ', results_tensor[i])
 
 if __name__ == "__main__":
-    #pr = cProfile.Profile()
-    #pr.enable()
-    
     main()
-    
-"""
-    pr.disable()
-    s = io.StringIO()
-    sortby = 'cumulative'
-    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-    ps.print_stats(100)  # Print the top 100 functions
-    print(s.getvalue()) """
 
 
