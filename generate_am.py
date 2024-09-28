@@ -1,5 +1,6 @@
 import torch
 import torch.optim as optim
+import math 
 import numpy as np
 import matplotlib.pyplot as plt
 import pstats
@@ -142,7 +143,7 @@ def train_on_data(d,features,num_samples,results_tensor,true_P,true_Q,feature_mo
     loss_fn = torch.nn.MSELoss()
 
     # Training loop
-    num_epochs = 300
+    num_epochs = 100
     poly_data = []
     batch_size = 256  # Define the batch size
 
@@ -179,7 +180,7 @@ def train_on_data(d,features,num_samples,results_tensor,true_P,true_Q,feature_mo
             epoch_loss += loss.item()
 
         # Print average loss for each epoch
-        if (epoch + 1) % 1 == 0:
+        if (epoch + 1) % 10 == 0:
             print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss/batch_size:.4f}')
             poly_data = poly_data + [epoch_loss]
 
@@ -191,25 +192,24 @@ def train_on_data(d,features,num_samples,results_tensor,true_P,true_Q,feature_mo
     #l2error = torch.dist(target_regressor,W,p=2)/(W.shape[0]*W.shape[1])
     #print('target regressor shape: ', target_regressor.shape)
     l2error = torch.dist(target_regressor,W,p=2)
-    print('l2 error: ', l2error)
+    #print('l2 error: ', l2error)
 
     # Output coordinates where target_regressor and W differ by more than 0.1
     # Flatten the W tensor to get a 1D array of its entries
     W_flat = W.flatten().detach().numpy()
 
     # Create a bar plot
-    plt.figure(figsize=(10, 6))
-    plt.bar(range(len(W_flat)), W_flat)
-    plt.xlabel('Index')
-    plt.ylabel('Value')
-    plt.title('Bar Plot of Each Coefficient of Regressor For Fixed Transition')
-    plt.show()
+    #plt.figure(figsize=(10, 6))
+    #plt.bar(range(len(W_flat)), W_flat)
+    #plt.xlabel('Index')
+    #plt.ylabel('Value')
+    #plt.title('Bar Plot of Each Coefficient of Regressor For Fixed Transition')
+    #plt.show()
 
     return min_eigenvalue, l2error  
 
-def main():
+def run_experiment(prob):
     d = 8
-    prob = 0.9
     num_samples = 2**14
     feature_mode = 'full'
     feature_length = int(d*d*(d-1)/2 + d**2)
@@ -220,8 +220,43 @@ def main():
     true_P, true_Q = truePQ(d)
     min_eigenvalue, l2error = train_on_data(d,features,num_samples,results_tensor,true_P,true_Q,feature_mode,feature_length)
     print('min_eigenvalue: ', min_eigenvalue)
-    print('l2error: ', l2error)
+    print('l2error: ', l2error) 
+    return min_eigenvalue, l2error 
 
+
+def main():
+    start = 0.99
+    end = 1.0
+    step = 0.01
+    prob_list = torch.arange(start,end,step)
+    eigen_list = []
+    l2_list = []
+    for i in range(len(prob_list)):
+        min_eigenvalue, l2error = run_experiment(prob_list[i])
+        print('eigen_list: ', eigen_list)
+        print('l2_list: ', l2_list)
+        eigen_list.append(-1*math.log(min_eigenvalue))
+        l2_list.append(l2error.item())
+        # Convert lists to NumPy arrays
+        eigen_array = np.array(eigen_list)
+        l2_array = np.array(l2_list)
+
+    # Convert lists to NumPy arrays
+    eigen_array = np.array(eigen_list)
+    l2_array = np.array(l2_list)
+    
+    # Save NumPy arrays to files
+    np.save('eigen_array.npy', eigen_array)
+    np.save('l2_array.npy', l2_array)
+
+    # Plotting
+    plt.plot(eigen_array, l2_array, marker='o')
+    plt.xlabel('Negative Log of Min Eigenvalue')
+    plt.ylabel('L2 Error')
+    plt.title('Negative Log of Min Eigenvalue vs L2 Error: d=4 Associative Memory')
+    plt.grid(True)
+    plt.show()
+     
 if __name__ == "__main__":
     main()
 
