@@ -110,3 +110,21 @@ def debug(target_regressor, Z, b, results_tensor):
     cov = fold_feature(Z,b)
     print('inner product: ', torch.inner(target_regressor, cov))
     print('target value: ', results_tensor[0])
+
+def truePQ(d):
+    num_tokens = int(d/2) 
+    # Create the identity and zero matrices once
+    I = torch.eye(num_tokens)
+    zero_matrix = torch.zeros(num_tokens, num_tokens)
+
+    # Construct the 2d by 2d matrix
+    top_row = torch.cat((zero_matrix, zero_matrix), dim=1)
+    bottom_row = torch.cat((zero_matrix, I), dim=1)
+    true_P = torch.cat((top_row, bottom_row), dim=0)
+
+    # If you need to create another similar matrix, you can reuse I and zero_matrix
+    top_row = torch.cat((I, zero_matrix), dim=1)
+    bottom_row = torch.cat((zero_matrix, zero_matrix), dim=1)
+    true_Q = torch.cat((top_row, bottom_row), dim=0)
+
+    return true_P, true_Q

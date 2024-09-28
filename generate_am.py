@@ -6,21 +6,21 @@ import pstats
 import io
 import cProfile
 
-from certificate_helper import compute_expression, fold_feature, fold_params, compute_max_min_eigen
+from certificate_helper import compute_expression, fold_feature, fold_params, compute_max_min_eigen, truePQ
 
-def main(): 
+def generate_mixture_data(d,prob,num_samples): 
     mode = 'mixed' # a mixture of random and unitary data
     style = 'unique'
     feature_mode = 'full'
-    mixture_prob = 0.9
+    mixture_prob = prob
     # Number of random choices of Z
-    num_samples = 2**14
+    #num_samples = 2**14
     # Set random seed for reproducibility (optional)
     torch.manual_seed(47)
 
     # Create the fixed matrices P and Q with i.i.d standard normal entries
 
-    d = 8 #dimension of model d by d 
+    #d = 8 #dimension of model d by d 
     n = int(d/2) + 1 #number of tokens 
     num_tokens = int(d/2) 
 
@@ -42,8 +42,8 @@ def main():
     bottom_row = torch.cat((zero_matrix, zero_matrix), dim=1)
     true_Q = torch.cat((top_row, bottom_row), dim=0)
 
-    print('true_P: ', true_P)
-    print('true_Q: ', true_Q)
+    #print('true_P: ', true_P)
+    #print('true_Q: ', true_Q)
 
     # Define the coordinates to fit (a, b) to (d-1,b) which we write as range(a,d) x {b}
     a, b = int(d/2), n-1  
@@ -111,18 +111,19 @@ def main():
     # Convert lists to tensors
     Z_tensor = torch.stack(Z_list)
     results_tensor = results  
-    print('results_tensor: ', results_tensor)
-
-    #Creates H matrix dependent on Z and the b coordinate of (a,b) 
-    #arguments Z is data matrix
-    #argument b is the column 
-    #feature does not change with a (the row of P_{a:})
-    #A new feature function for the folded regression problem that guarantees uniqueness
-
 
     # Define the arguments for fold_feature
     args = {'feature_mode': feature_mode, 'feature_length': feature_length,'b': b}    
     features = torch.stack([fold_feature(Z_tensor[i],**args) for i in range(num_samples)])
+
+    torch.save({'features': features, 'results_tensor': results_tensor}, 'tensors.pth')
+    return features,results_tensor
+
+   
+def train_on_data(d,features,num_samples,results_tensor,true_P,true_Q,feature_mode,feature_length): 
+    a = int(d/2)
+    n = int(d/2) + 1 #number of tokens 
+    b = n-1
 
     # Example usage
     max_eigenvalue, min_eigenvalue, max_eigenvector, min_eigenvector = compute_max_min_eigen(features, num_samples)
@@ -189,12 +190,10 @@ def main():
     #print('W shape: ', W.shape)
     #l2error = torch.dist(target_regressor,W,p=2)/(W.shape[0]*W.shape[1])
     #print('target regressor shape: ', target_regressor.shape)
-    l2error = torch.dist(target_regressor,W,p=2)/(W.shape[0]*W.shape[1])
+    l2error = torch.dist(target_regressor,W,p=2)
     print('l2 error: ', l2error)
 
     # Output coordinates where target_regressor and W differ by more than 0.1
-
-
     # Flatten the W tensor to get a 1D array of its entries
     W_flat = W.flatten().detach().numpy()
 
@@ -206,8 +205,23 @@ def main():
     plt.title('Bar Plot of Each Coefficient of Regressor For Fixed Transition')
     plt.show()
 
+    return min_eigenvalue, l2error  
+
+def main():
+    d = 8
+    prob = 0.0
+    num_samples = 2**14
+    feature_mode = 'full'
+    feature_length = int(d*d*(d-1)/2 + d**2)
+    _,_ = generate_mixture_data(d,prob,num_samples)
+    loaded_tensors = torch.load('tensors.pth')
+    features = loaded_tensors['features']
+    results_tensor = loaded_tensors['results_tensor']
+    true_P, true_Q = truePQ(d)
+    min_eigenvalue, l2error = train_on_data(d,features,num_samples,results_tensor,true_P,true_Q,feature_mode,feature_length)
+    print('min_eigenvalue: ', min_eigenvalue)
+    print('l2error: ', l2error)
 
 if __name__ == "__main__":
     main()
-
 
