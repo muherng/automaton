@@ -209,7 +209,7 @@ def train_on_data(d,features,num_samples,results_tensor,true_P,true_Q,feature_mo
 
 def main():
     d = 8
-    prob = 0.0
+    prob = 0.9
     num_samples = 2**14
     feature_mode = 'full'
     feature_length = int(d*d*(d-1)/2 + d**2)
