@@ -209,7 +209,7 @@ def train_on_data(d,features,num_samples,results_tensor,true_P,true_Q,feature_mo
     return min_eigenvalue, l2error  
 
 def run_experiment(prob):
-    d = 8
+    d = 4
     num_samples = 2**14
     feature_mode = 'full'
     feature_length = int(d*d*(d-1)/2 + d**2)
@@ -225,7 +225,7 @@ def run_experiment(prob):
 
 
 def main():
-    start = 0.99
+    start = 0.9
     end = 1.0
     step = 0.01
     prob_list = torch.arange(start,end,step)
