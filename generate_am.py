@@ -225,9 +225,9 @@ def run_experiment(prob):
 
 
 def main():
-    start = 0.9
+    start = 0.95
     end = 1.0
-    step = 0.01
+    step = 0.001
     prob_list = torch.arange(start,end,step)
     eigen_list = []
     l2_list = []
@@ -235,8 +235,12 @@ def main():
         min_eigenvalue, l2error = run_experiment(prob_list[i])
         print('eigen_list: ', eigen_list)
         print('l2_list: ', l2_list)
-        eigen_list.append(-1*math.log(min_eigenvalue))
-        l2_list.append(l2error.item())
+        try : 
+            eigen_list.append(-1*math.log(min_eigenvalue))
+            l2_list.append(l2error.item())
+        except: 
+            print('error')
+            continue
         # Convert lists to NumPy arrays
         eigen_array = np.array(eigen_list)
         l2_array = np.array(l2_list)
