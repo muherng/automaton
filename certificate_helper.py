@@ -128,3 +128,59 @@ def truePQ(d):
     true_Q = torch.cat((top_row, bottom_row), dim=0)
 
     return true_P, true_Q
+
+def training_loop(d,a,feature_length,num_samples,features,results_tensor):
+# Initialize trainable parameters P and Q
+    #d^3 for a'th entry of P, recall only regressing (a,b) coordinate
+    #W = torch.randn(feature_length, requires_grad=True)
+    #k is dimension of prediction
+    k = d - a
+    W = torch.randn((k,feature_length), requires_grad=True)
+    # Define the optimizer
+    optimizer = optim.Adam([W], lr=0.01)
+
+    # Define the loss function (mean squared error)
+    loss_fn = torch.nn.MSELoss()
+
+    # Training loop
+    num_epochs = 100
+    poly_data = []
+    batch_size = 256  # Define the batch size
+
+    # Training loop
+    for epoch in range(num_epochs):
+        epoch_loss = 0.0
+        num_batches = (num_samples + batch_size - 1) // batch_size  # Calculate the number of batches
+
+        for batch_idx in range(num_batches):
+            start_idx = batch_idx * batch_size
+            end_idx = min(start_idx + batch_size, num_samples)
+
+            # Get the batch data
+            #batch_covariances = torch.stack([fold_feature(Z_tensor[i], b) for i in range(start_idx, end_idx)])
+            batch_covariances = torch.transpose(features[start_idx:end_idx,:], 0,1)
+            batch_results = results_tensor[:,start_idx:end_idx]
+
+            # Zero the gradients
+            optimizer.zero_grad()
+
+            # Forward pass for the batch
+            batch_outputs = torch.matmul(W, batch_covariances)
+            #raise ValueError('stop')
+            # Compute loss for the batch
+            loss = loss_fn(batch_outputs, batch_results)
+
+            # Backward pass
+            loss.backward()
+
+            # Update parameters
+            optimizer.step()
+
+            # Accumulate loss
+            epoch_loss += loss.item()
+
+        # Print average loss for each epoch
+        if (epoch + 1) % 10 == 0:
+            print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss/batch_size:.4f}')
+            poly_data = poly_data + [epoch_loss]
+    return W

@@ -117,11 +117,11 @@ def generate_mixture_data(d,prob,num_samples):
     args = {'feature_mode': feature_mode, 'feature_length': feature_length,'b': b}    
     features = torch.stack([fold_feature(Z_tensor[i],**args) for i in range(num_samples)])
 
-    torch.save({'features': features, 'results_tensor': results_tensor}, 'tensors.pth')
+    torch.save({'Z_tensor': Z_tensor, 'features': features, 'results_tensor': results_tensor}, 'tensors.pth')
     return features,results_tensor
 
    
-def train_on_data(d,features,num_samples,results_tensor,true_P,true_Q,feature_mode,feature_length): 
+def train_on_data(d,Z_tensor,features,num_samples,results_tensor,true_P,true_Q,feature_mode,feature_length): 
     a = int(d/2)
     n = int(d/2) + 1 #number of tokens 
     b = n-1
@@ -196,7 +196,7 @@ def train_on_data(d,features,num_samples,results_tensor,true_P,true_Q,feature_mo
 
     # Output coordinates where target_regressor and W differ by more than 0.1
     # Flatten the W tensor to get a 1D array of its entries
-    W_flat = W.flatten().detach().numpy()
+    #W_flat = W.flatten().detach().numpy()
 
     # Create a bar plot
     #plt.figure(figsize=(10, 6))
@@ -215,10 +215,13 @@ def run_experiment(prob):
     feature_length = int(d*d*(d-1)/2 + d**2)
     _,_ = generate_mixture_data(d,prob,num_samples)
     loaded_tensors = torch.load('tensors.pth')
+    Z_tensor = loaded_tensors['Z_tensor']
     features = loaded_tensors['features']
     results_tensor = loaded_tensors['results_tensor']
     true_P, true_Q = truePQ(d)
-    min_eigenvalue, l2error = train_on_data(d,features,num_samples,results_tensor,true_P,true_Q,feature_mode,feature_length)
+    min_eigenvalue, l2error = train_on_data(d,Z_tensor,features,num_samples,
+                                            results_tensor,true_P,
+                                            true_Q,feature_mode,feature_length)
     print('min_eigenvalue: ', min_eigenvalue)
     print('l2error: ', l2error) 
     return min_eigenvalue, l2error 
