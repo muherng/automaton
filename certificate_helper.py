@@ -129,7 +129,7 @@ def truePQ(d):
 
     return true_P, true_Q
 
-def training_loop(d,a,feature_length,num_samples,features,results_tensor):
+def training_loop_linear(d,a,feature_length,num_samples,features,results_tensor):
 # Initialize trainable parameters P and Q
     #d^3 for a'th entry of P, recall only regressing (a,b) coordinate
     #W = torch.randn(feature_length, requires_grad=True)
@@ -184,3 +184,102 @@ def training_loop(d,a,feature_length,num_samples,features,results_tensor):
             print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss/batch_size:.4f}')
             poly_data = poly_data + [epoch_loss]
     return W
+
+#compute multi head linear attention
+""" def MHLA(P_experts, Q_experts, Z):
+    d, _, heads = P_experts.shape
+    d,n = Z.shape
+    sum_result = torch.zeros((d,n))  # Initialize the sum with a zero matrix of appropriate size
+    
+    for i in range(heads):
+        P_i = P_experts[:, :, i]
+        Q_i = Q_experts[:, :, i]
+        sum_result += compute_expression(P_i, Q_i, Z)
+    
+    return sum_result/heads """
+
+def MHLA(P_experts, Q_experts, batch_covariances):
+    d, _, heads = P_experts.shape
+    #print('shape: ', batch_covariances.shape)
+    batch_size, d, n = batch_covariances.shape
+    result = torch.zeros(batch_size, d, n, device=batch_covariances.device)
+    
+    for h in range(heads):
+        P_h = P_experts[:, :, h]  # (d, d)
+        Q_h = Q_experts[:, :, h]  # (d, d)
+        
+        for b in range(batch_size):
+            Z = batch_covariances[b]  # (d, n)
+            ZT = Z.T  # (n, d)
+            
+            ZTQZ = ZT @ Q_h @ Z  # (n, n)
+            PZ = P_h @ Z  # (d, n)
+            
+            result[b] += PZ @ ZTQZ  # (d, n)
+    
+    return result / heads
+
+def training_loop_MHLA(a,heads,num_samples,Z_tensor,results_tensor):
+    # Initialize trainable parameters P experts and Q experts
+    #k is dimension of prediction
+    d,n = Z_tensor[0].shape
+    k = d - a
+    heads = 2
+    P_experts = torch.randn(d,d,heads,requires_grad=True)
+    Q_experts = torch.randn(d,d,heads,requires_grad=True)
+
+    # Define the optimizer
+    optimizer = optim.Adam([P_experts, Q_experts], lr=0.01)
+
+    # Define the loss function (mean squared error)
+    loss_fn = torch.nn.MSELoss()
+
+    # Training loop
+    num_epochs = 30
+    poly_data = []
+    batch_size = 256  # Define the batch size
+
+    # Training loop
+    for epoch in range(num_epochs):
+        epoch_loss = 0.0
+        num_batches = (num_samples + batch_size - 1) // batch_size  # Calculate the number of batches
+
+        for batch_idx in range(num_batches):
+            start_idx = batch_idx * batch_size
+            end_idx = min(start_idx + batch_size, num_samples)
+
+            # Get the batch data
+            #batch_covariances = torch.stack([fold_feature(Z_tensor[i], b) for i in range(start_idx, end_idx)])
+
+            #batch_covariances = torch.transpose(features[start_idx:end_idx,:], 0,1)
+            batch_covariances = Z_tensor[start_idx:end_idx,:,:]
+            batch_results = results_tensor[:,start_idx:end_idx]
+
+            # Zero the gradients
+            optimizer.zero_grad()
+
+            # Forward pass for the batch
+            #batch_outputs = torch.matmul(W, batch_covariances)
+            batch_outputs = MHLA(P_experts, Q_experts, batch_covariances)
+            batch_outputs = torch.transpose(batch_outputs[:,a:,n-1],0,1)
+            #print('batch_outputs shape: ', batch_outputs.shape)
+            #print('batch_results shape: ', batch_results.shape)
+            #raise ValueError('stop')
+            # Compute loss for the batch
+            loss = loss_fn(batch_outputs, batch_results)
+
+            # Backward pass
+            loss.backward()
+
+            # Update parameters
+            optimizer.step()
+
+            # Accumulate loss
+            epoch_loss += loss.item()
+
+        # Print average loss for each epoch
+        if (epoch + 1) % 10 == 0:
+            print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss/batch_size:.4f}')
+            poly_data = poly_data + [epoch_loss]
+    return P_experts, Q_experts
+
