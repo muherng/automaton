@@ -224,7 +224,6 @@ def training_loop_MHLA(a,heads,num_samples,Z_tensor,results_tensor):
     #k is dimension of prediction
     d,n = Z_tensor[0].shape
     k = d - a
-    heads = 2
     P_experts = torch.randn(d,d,heads,requires_grad=True)
     Q_experts = torch.randn(d,d,heads,requires_grad=True)
 
@@ -235,9 +234,9 @@ def training_loop_MHLA(a,heads,num_samples,Z_tensor,results_tensor):
     loss_fn = torch.nn.MSELoss()
 
     # Training loop
-    num_epochs = 30
+    num_epochs = 10
     poly_data = []
-    batch_size = 256  # Define the batch size
+    batch_size = 32  # Define the batch size
 
     # Training loop
     for epoch in range(num_epochs):

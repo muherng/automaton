@@ -122,7 +122,7 @@ def generate_mixture_data(d,prob,num_samples):
     return features,results_tensor
 
    
-def train_on_data(d,Z_tensor,features,num_samples,results_tensor,true_P,true_Q,feature_mode,feature_length): 
+def train_on_data(d,heads,Z_tensor,features,num_samples,results_tensor,true_P,true_Q,feature_mode,feature_length): 
     a = int(d/2)
     n = int(d/2) + 1 #number of tokens 
     b = n-1 
@@ -137,7 +137,6 @@ def train_on_data(d,Z_tensor,features,num_samples,results_tensor,true_P,true_Q,f
     if model_type == 'linear':
         W = training_loop_linear(d,a,feature_length,num_samples,features,results_tensor)
     if model_type == 'MHLA':
-        heads = 2
         P_heads, Q_heads = training_loop_MHLA(a,heads,num_samples,Z_tensor,results_tensor)
     args = {'feature_mode': feature_mode, 'feature_length': feature_length,'a': a,'b': b, 'k': k}
     target_regressor = fold_params(true_P,true_Q,**args)
@@ -156,19 +155,19 @@ def train_on_data(d,Z_tensor,features,num_samples,results_tensor,true_P,true_Q,f
 
     # Output coordinates where target_regressor and W differ by more than 0.1
     # Flatten the W tensor to get a 1D array of its entries
-    W_flat = W.flatten().detach().numpy()
+    #W_flat = W.flatten().detach().numpy()
 
     # Create a bar plot
-    plt.figure(figsize=(10, 6))
-    plt.bar(range(len(W_flat)), W_flat)
-    plt.xlabel('Index')
-    plt.ylabel('Value')
-    plt.title('Bar Plot of Each Coefficient of Regressor For Fixed Transition')
-    plt.show()
+    #plt.figure(figsize=(10, 6))
+    #plt.bar(range(len(W_flat)), W_flat)
+    #plt.xlabel('Index')
+    #plt.ylabel('Value')
+    #plt.title('Bar Plot of Each Coefficient of Regressor For Fixed Transition')
+    #plt.show()
 
     return min_eigenvalue, l2error  
 
-def run_experiment(prob):
+def run_experiment(heads,prob):
     d = 4
     num_samples = 2**14
     feature_mode = 'full'
@@ -179,7 +178,7 @@ def run_experiment(prob):
     features = loaded_tensors['features']
     results_tensor = loaded_tensors['results_tensor']
     true_P, true_Q = truePQ(d)
-    min_eigenvalue, l2error = train_on_data(d,Z_tensor,features,num_samples,
+    min_eigenvalue, l2error = train_on_data(d,heads,Z_tensor,features,num_samples,
                                             results_tensor,true_P,
                                             true_Q,feature_mode,feature_length)
     print('min_eigenvalue: ', min_eigenvalue)
@@ -189,32 +188,37 @@ def run_experiment(prob):
 
 def main():
     start = 0.95
-    step = 0.001
+    step = 0.04
     end = 1.0 + step
     prob_list = torch.arange(start,end,step)
-    eigen_list = []
-    l2_list = []
-    for i in range(len(prob_list)):
-        min_eigenvalue, l2error = run_experiment(prob_list[i])
-        print('eigen_list: ', eigen_list)
-        print('l2_list: ', l2_list)
-        try : 
-            eigen_list.append(-1*math.log(min_eigenvalue))
-            l2_list.append(l2error.item())
-        except: 
-            print('error')
-            continue
-        # Convert lists to NumPy arrays
-        eigen_array = np.array(eigen_list)
-        l2_array = np.array(l2_list)
+    heads_list = [1,2]
+    for heads in heads_list:
+        eigen_list = []
+        l2_list = [] 
+        for i in range(len(prob_list)):
+            min_eigenvalue, l2error = run_experiment(heads,prob_list[i])
+            print('eigen_list: ', eigen_list)
+            print('l2_list: ', l2_list)
+            try : 
+                eigen_list.append(-1*math.log(min_eigenvalue))
+                l2_list.append(l2error.item())
+            except: 
+                print('error')
+                continue
+            # Convert lists to NumPy arrays
+            eigen_array = np.array(eigen_list)
+            l2_array = np.array(l2_list)
 
-    # Convert lists to NumPy arrays
-    eigen_array = np.array(eigen_list)
-    l2_array = np.array(l2_list)
-    
-    # Save NumPy arrays to files
-    np.save('eigen_array.npy', eigen_array)
-    np.save('l2_array.npy', l2_array)
+        # Convert lists to NumPy arrays
+        eigen_array = np.zeros((len(heads_list),len(eigen_list)))
+        l2_array = np.zeros((len(heads_list),len(l2_list)))
+
+        eigen_array[heads:] = np.array(eigen_list)
+        l2_array = np.array(l2_list)
+        
+        # Save NumPy arrays to files
+        np.save('eigen_array.npy', eigen_array)
+        np.save('l2_array.npy', l2_array)
 
     # Plotting
     plt.plot(eigen_array, l2_array, marker='o')
@@ -225,7 +229,7 @@ def main():
     plt.show()
      
 if __name__ == "__main__":
-    prob = 0.95
-    run_experiment(prob)
-    #main()
+    #prob = 1.0
+    #run_experiment(prob)
+    main()
 
