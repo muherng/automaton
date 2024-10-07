@@ -234,7 +234,7 @@ def training_loop_MHLA(a,heads,num_samples,Z_tensor,results_tensor):
     loss_fn = torch.nn.MSELoss()
 
     # Training loop
-    num_epochs = 10
+    num_epochs = 3
     poly_data = []
     batch_size = 32  # Define the batch size
 

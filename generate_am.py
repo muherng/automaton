@@ -192,7 +192,12 @@ def main():
     end = 1.0 + step
     prob_list = torch.arange(start,end,step)
     heads_list = [1,2]
+    index = -1
+    # Convert lists to NumPy arrays
+    eigen_array = np.zeros((len(heads_list),len(prob_list)-1))
+    l2_array = np.zeros((len(heads_list),len(prob_list)-1))
     for heads in heads_list:
+        index += 1
         eigen_list = []
         l2_list = [] 
         for i in range(len(prob_list)):
@@ -206,15 +211,13 @@ def main():
                 print('error')
                 continue
             # Convert lists to NumPy arrays
-            eigen_array = np.array(eigen_list)
-            l2_array = np.array(l2_list)
+            #eigen_array = np.array(eigen_list)
+            #l2_array = np.array(l2_list)
 
-        # Convert lists to NumPy arrays
-        eigen_array = np.zeros((len(heads_list),len(eigen_list)))
-        l2_array = np.zeros((len(heads_list),len(l2_list)))
-
-        eigen_array[heads:] = np.array(eigen_list)
-        l2_array = np.array(l2_list)
+        print('eigen_array: ', eigen_array)
+        print('eigen_list: ', eigen_list)
+        eigen_array[index,:] = np.array(eigen_list)
+        l2_array[index,:] = np.array(l2_list)
         
         # Save NumPy arrays to files
         np.save('eigen_array.npy', eigen_array)
