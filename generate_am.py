@@ -188,10 +188,10 @@ def run_experiment(heads,prob):
 
 def main():
     start = 0.95
-    step = 0.02
+    step = 0.01
     end = 1.0 + step
     prob_list = torch.arange(start,end,step)
-    heads_list = [1,2,4]
+    heads_list = [1]
     index = -1
     # Convert lists to NumPy arrays
     eigen_array = np.zeros((len(heads_list),len(prob_list)-1))
@@ -202,6 +202,8 @@ def main():
         l2_list = [] 
         for i in range(len(prob_list)):
             min_eigenvalue, l2error = run_experiment(heads,prob_list[i])
+            print('heads: ', heads)
+            print('prob: ', prob_list[i])
             print('eigen_list: ', eigen_list)
             print('l2_list: ', l2_list)
             try : 
