@@ -130,14 +130,17 @@ def train_on_data(d,heads,Z_tensor,features,num_samples,results_tensor,true_P,tr
 
     # Example usage
     max_eigenvalue, min_eigenvalue, max_eigenvector, min_eigenvector = compute_max_min_eigen(features, num_samples)
-    print("Min eigenvalue:", min_eigenvalue)
+    if min_eigenvalue < 0:
+        print("Min eigenvalue:", min_eigenvalue)
+        print("Warning: Min eigenvalue is negative")
+        min_eigenvalue = 0
 
     #model_type = 'linear'
     model_type = 'MHLA'
     if model_type == 'linear':
         W = training_loop_linear(d,a,feature_length,num_samples,features,results_tensor)
     if model_type == 'MHLA':
-        P_heads, Q_heads = training_loop_MHLA(a,heads,num_samples,Z_tensor,results_tensor)
+        P_heads, Q_heads, loss = training_loop_MHLA(a,heads,num_samples,Z_tensor,results_tensor)
     args = {'feature_mode': feature_mode, 'feature_length': feature_length,'a': a,'b': b, 'k': k}
     target_regressor = fold_params(true_P,true_Q,**args)
     
@@ -165,7 +168,7 @@ def train_on_data(d,heads,Z_tensor,features,num_samples,results_tensor,true_P,tr
     #plt.title('Bar Plot of Each Coefficient of Regressor For Fixed Transition')
     #plt.show()
 
-    return min_eigenvalue, l2error  
+    return min_eigenvalue, l2error, loss  
 
 def run_experiment(heads,prob):
     d = 4
@@ -178,36 +181,40 @@ def run_experiment(heads,prob):
     features = loaded_tensors['features']
     results_tensor = loaded_tensors['results_tensor']
     true_P, true_Q = truePQ(d)
-    min_eigenvalue, l2error = train_on_data(d,heads,Z_tensor,features,num_samples,
+    min_eigenvalue, l2error, loss = train_on_data(d,heads,Z_tensor,features,num_samples,
                                             results_tensor,true_P,
                                             true_Q,feature_mode,feature_length)
     print('min_eigenvalue: ', min_eigenvalue)
     print('l2error: ', l2error) 
-    return min_eigenvalue, l2error 
+    return min_eigenvalue, l2error, loss 
 
 
 def main():
     start = 0.95
-    step = 0.01
+    step = 0.001
     end = 1.0 + step
     prob_list = torch.arange(start,end,step)
     heads_list = [1]
     index = -1
     # Convert lists to NumPy arrays
-    eigen_array = np.zeros((len(heads_list),len(prob_list)-1))
-    l2_array = np.zeros((len(heads_list),len(prob_list)-1))
+    eigen_array = np.zeros((len(heads_list),len(prob_list)))
+    l2_array = np.zeros((len(heads_list),len(prob_list)))
     for heads in heads_list:
         index += 1
         eigen_list = []
         l2_list = [] 
         for i in range(len(prob_list)):
-            min_eigenvalue, l2error = run_experiment(heads,prob_list[i])
+            min_eigenvalue, l2error, loss = run_experiment(heads,prob_list[i])
             print('heads: ', heads)
             print('prob: ', prob_list[i])
             print('eigen_list: ', eigen_list)
             print('l2_list: ', l2_list)
+            if loss > 0.01:
+                continue
             try : 
-                eigen_list.append(-1*math.log(min_eigenvalue))
+                epsilon = 1e-10  # Small value to avoid log(0) issues
+                print('small number: ', min_eigenvalue + epsilon)
+                eigen_list.append(-1*np.log(min_eigenvalue + epsilon))
                 l2_list.append(l2error.item())
             except: 
                 print('error')
@@ -215,8 +222,17 @@ def main():
 
         #print('eigen_array: ', eigen_array)
         #print('eigen_list: ', eigen_list)
-        eigen_array[index,:] = np.array(eigen_list)
-        l2_array[index,:] = np.array(l2_list)
+
+        # Sort eigen_list and rearrange l2_list accordingly
+        sorted_pairs = sorted(zip(eigen_list, l2_list))
+        eigen_list, l2_list = zip(*sorted_pairs)
+
+        # Convert back to lists
+        eigen_list = list(eigen_list)
+        l2_list = list(l2_list)
+
+        eigen_array[index,:len(eigen_list)] = np.array(eigen_list)
+        l2_array[index,:len(eigen_list)] = np.array(l2_list)
         
         # Save NumPy arrays to files
         np.save('eigen_array.npy', eigen_array)

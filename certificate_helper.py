@@ -234,7 +234,7 @@ def training_loop_MHLA(a,heads,num_samples,Z_tensor,results_tensor):
     loss_fn = torch.nn.MSELoss()
 
     # Training loop
-    num_epochs = 20
+    num_epochs = 100
     poly_data = []
     batch_size = 32  # Define the batch size
 
@@ -280,5 +280,7 @@ def training_loop_MHLA(a,heads,num_samples,Z_tensor,results_tensor):
         if (epoch + 1) % 1 == 0:
             print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss/batch_size:.4f}')
             poly_data = poly_data + [epoch_loss]
-    return P_experts, Q_experts
+        if epoch_loss/batch_size < .001:
+            break
+    return P_experts, Q_experts, epoch_loss/batch_size
 
