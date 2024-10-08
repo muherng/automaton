@@ -191,10 +191,10 @@ def run_experiment(heads,prob):
 
 def main():
     start = 0.95
-    step = 0.001
+    step = 0.01
     end = 1.0 + step
     prob_list = torch.arange(start,end,step)
-    heads_list = [1]
+    heads_list = [2]
     index = -1
     # Convert lists to NumPy arrays
     eigen_array = np.zeros((len(heads_list),len(prob_list)))
@@ -210,6 +210,7 @@ def main():
             print('eigen_list: ', eigen_list)
             print('l2_list: ', l2_list)
             if loss > 0.01:
+                print('fail to train: ', loss)
                 continue
             try : 
                 epsilon = 1e-10  # Small value to avoid log(0) issues
