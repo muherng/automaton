@@ -194,7 +194,7 @@ def main():
     step = 0.01
     end = 1.0 + step
     prob_list = torch.arange(start,end,step)
-    heads_list = [2]
+    heads_list = [4]
     index = -1
     # Convert lists to NumPy arrays
     eigen_array = np.zeros((len(heads_list),len(prob_list)))
