@@ -89,11 +89,11 @@ def compute_max_min_eigen(features, num_samples):
     # Compute the covariance matrix using torch.cov
     covariance_matrix = torch.cov(features.T)
 
-    print('cov shape: ', covariance_matrix.shape)
+    #print('cov shape: ', covariance_matrix.shape)
     
     # Compute eigenvalues and eigenvectors using torch.linalg.eigh
     eigenvalues, eigenvectors = torch.linalg.eigh(covariance_matrix)
-    print('eigenvalues: ', eigenvalues)
+    #print('eigenvalues: ', eigenvalues)
     
     # Find the maximum and minimum eigenvalues and their corresponding eigenvectors
     max_eigenvalue, max_index = torch.max(eigenvalues, 0)
@@ -234,7 +234,7 @@ def training_loop_MHLA(a,heads,num_samples,Z_tensor,results_tensor):
     loss_fn = torch.nn.MSELoss()
 
     # Training loop
-    num_epochs = 3
+    num_epochs = 5
     poly_data = []
     batch_size = 32  # Define the batch size
 
@@ -277,7 +277,7 @@ def training_loop_MHLA(a,heads,num_samples,Z_tensor,results_tensor):
             epoch_loss += loss.item()
 
         # Print average loss for each epoch
-        if (epoch + 1) % 10 == 0:
+        if (epoch + 1) % 1 == 0:
             print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss/batch_size:.4f}')
             poly_data = poly_data + [epoch_loss]
     return P_experts, Q_experts

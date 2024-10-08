@@ -18,7 +18,7 @@ def generate_mixture_data(d,prob,num_samples):
     # Number of random choices of Z
     #num_samples = 2**14
     # Set random seed for reproducibility (optional)
-    torch.manual_seed(47)
+    #torch.manual_seed(47)
 
     # Create the fixed matrices P and Q with i.i.d standard normal entries
 
@@ -188,10 +188,10 @@ def run_experiment(heads,prob):
 
 def main():
     start = 0.95
-    step = 0.04
+    step = 0.02
     end = 1.0 + step
     prob_list = torch.arange(start,end,step)
-    heads_list = [1,2]
+    heads_list = [1,2,4]
     index = -1
     # Convert lists to NumPy arrays
     eigen_array = np.zeros((len(heads_list),len(prob_list)-1))
@@ -210,12 +210,9 @@ def main():
             except: 
                 print('error')
                 continue
-            # Convert lists to NumPy arrays
-            #eigen_array = np.array(eigen_list)
-            #l2_array = np.array(l2_list)
 
-        print('eigen_array: ', eigen_array)
-        print('eigen_list: ', eigen_list)
+        #print('eigen_array: ', eigen_array)
+        #print('eigen_list: ', eigen_list)
         eigen_array[index,:] = np.array(eigen_list)
         l2_array[index,:] = np.array(l2_list)
         
@@ -224,12 +221,17 @@ def main():
         np.save('l2_array.npy', l2_array)
 
     # Plotting
-    plt.plot(eigen_array, l2_array, marker='o')
+    for i in range(eigen_array.shape[0]):
+        plt.plot(eigen_array[i, :], l2_array[i, :], marker='o', label=f'Line {i+1}')
+
     plt.xlabel('Negative Log of Min Eigenvalue')
     plt.ylabel('L2 Error')
     plt.title('Negative Log of Min Eigenvalue vs L2 Error: d=4 Associative Memory')
     plt.grid(True)
+    plt.legend()
     plt.show()
+
+
      
 if __name__ == "__main__":
     #prob = 1.0
